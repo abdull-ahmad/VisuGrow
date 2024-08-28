@@ -13,7 +13,7 @@ app.use('/health', (req, res) => {
   res.send('Server is running'); // Health check endpoint
 });
 
-app.listen(3000, () => {
+app.listen(5000, () => {
   connectDB();
-  console.log('Server is running on http://localhost:3000');
+  console.log('Server is running on http://localhost:5000');
 });
