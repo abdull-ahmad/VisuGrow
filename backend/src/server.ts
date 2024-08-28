@@ -1,12 +1,13 @@
 import express from 'express';
 import connectDB from './DB/connect';
 import dotenv from 'dotenv';
+import router from '../src/routes/index';
 
 dotenv.config();
 
 const app = express();
 
-
+app.use('/api', router);
 
 app.listen(3000, () => {
   connectDB();
