@@ -2,6 +2,7 @@ import { RequestHandler } from "express";
 import { User } from "../models/user.model";
 import bcrypt from "bcrypt";
 import { generateToken } from "../utils/generateToken";
+import { sendEmailVerification } from "../mail/emails";
 
 export const register: RequestHandler = async (req, res) => {
   const { email, password } = req.body;
@@ -33,7 +34,10 @@ export const register: RequestHandler = async (req, res) => {
     });
 
     await user.save();
+
     generateToken(res, user._id);
+
+    await sendEmailVerification(user.email , verificationToken);
 
     res.status(201).json({ success: true, message: "User created" , user:{
         ...user.toObject(),
