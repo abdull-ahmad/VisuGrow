@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 
-
 export const generateToken = (res:any , userId:any) => {
     if(!process.env.JWT_SECRET){
         throw new Error("JWT_SECRET is missing");
