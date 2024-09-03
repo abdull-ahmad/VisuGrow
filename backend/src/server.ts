@@ -1,7 +1,7 @@
 import express from 'express';
 import connectDB from './DB/connect';
 import dotenv from 'dotenv';
-import router from '../src/routes/index';
+import router from './routes/index';
 import cookieParser from 'cookie-parser';
 
 dotenv.config();
