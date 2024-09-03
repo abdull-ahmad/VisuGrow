@@ -9,10 +9,10 @@ let clientID= process.env.EMAIL_CLIENTID;
 let clientSecret= process.env.EMAIL_CLIENTSECRET;
 let token= process.env.REFRESH_TOKEN;
 let OAuth2Client = new google.auth.OAuth2(clientID, clientSecret, "https://developers.google.com/oauthplayground");
+let accessToken = OAuth2Client.getAccessToken().toString();
 
 OAuth2Client.setCredentials({ refresh_token: token });
 
-let accessToken = OAuth2Client.getAccessToken().toString();
 
 export const sender = {
   email: userEmail,
