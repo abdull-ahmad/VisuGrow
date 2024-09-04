@@ -13,7 +13,6 @@ let accessToken = OAuth2Client.getAccessToken().toString();
 
 OAuth2Client.setCredentials({ refresh_token: token });
 
-
 export const sender = {
   email: userEmail,
   name: "Visugrow",
