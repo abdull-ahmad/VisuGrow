@@ -1,6 +1,8 @@
+import LandingTop from "./components/LandingTop"
+
 function App() {
   return (
-    <div></div>
+    <LandingTop/>
   )
 }
 
