@@ -1,7 +1,6 @@
-import { RequestHandler , Request } from "express";
+import { RequestHandler, Request } from "express";
 import { uploadOnCloudinary } from "../utils/cloudinary";
-import { User } from "../models/user.model";
-
+import { File } from "../models/file.model";
 
 interface CustomRequest extends Request {
   userId?: string;
@@ -24,15 +23,25 @@ export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
       return res.status(500).json({ success: false, message: "Something went wrong during file upload" });
     }
 
-    const user = await User.findByIdAndUpdate(req.userId, { fileUri: file?.url || "" }, { new: true });
+    let fileData = await File.findOne({ user: req.userId });
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+    if (fileData) {
+      // Append the new file URI to the existing file URIs
+      fileData.fileUri.push(file?.url || "");
+    } else {
+      // Create a new file entry
+      fileData = new File({ fileUri: [file?.url], user: req.userId });
     }
+
+    await fileData.save();
 
     res.status(200).json({ success: true, message: "File uploaded successfully", fileUri: file?.url });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
+};
+
+export const deleteFile: RequestHandler = async (req: CustomRequest, res) => {
+
 };

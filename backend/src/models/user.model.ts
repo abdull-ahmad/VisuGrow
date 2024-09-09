@@ -10,10 +10,6 @@ const schema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    fileUri:{
-        type: String,
-        default: null,
-    },
     lastLogin: {
         type: Date,
         default: Date.now,
