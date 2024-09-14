@@ -1,6 +1,6 @@
-import {v2 as cloudinary} from 'cloudinary';
-import fs from 'fs';
-import dotenv from 'dotenv';
+import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -10,35 +10,34 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-const uploadOnCloudinary = async (localFilePath:string) => {
+const uploadOnCloudinary = async (localFilePath: string) => {
   try {
-      if (!localFilePath) return null
-      
-      const response = await cloudinary.uploader.upload( localFilePath, {
-          resource_type: "auto"
-      })
-      fs.unlinkSync(localFilePath)
-      return response;
-      
-  } catch (error) {
-      console.log("Error while uploading file on cloudinary", error);
-      fs.unlinkSync(localFilePath) // remove the locally saved temporary file as the upload operation got failed
-      return null;
-  }
-}
+    if (!localFilePath) return null;
 
-const deleteFromCloudinary = async (originalUrl:string) => {
-  try{
-    const result = await cloudinary.uploader.destroy(originalUrl);
+    const response = await cloudinary.uploader.upload(localFilePath, {
+      resource_type: "auto",
+    });
+    fs.unlinkSync(localFilePath);
+    return response;
+  } catch (error) {
+    console.log("Error while uploading file on cloudinary", error);
+    fs.unlinkSync(localFilePath); // remove the locally saved temporary file as the upload operation got failed
+    return null;
+  }
+};
+
+const deleteFromCloudinary = async (publicId: string) => {
+  if (!publicId) return null;
+  try {
+    const result = await cloudinary.uploader.destroy(publicId, {
+      type: "upload",
+      resource_type: "raw",
+    });
     console.log("file is deleted from cloudinary", result);
-  }catch(error){
+  } catch (error) {
     console.log("Error while deleting file from cloudinary", error);
     return null;
   }
-}
+};
 
-
-
-export {uploadOnCloudinary , deleteFromCloudinary}
-
+export { uploadOnCloudinary, deleteFromCloudinary };
