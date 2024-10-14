@@ -29,6 +29,7 @@
     "cloudinary": "^2.4.0",
     "cookie-parser": "^1.4.6",
     "crypto": "^1.0.1",
+    "csv-parse": "^5.5.6",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "google": "^2.1.0",
@@ -38,6 +39,7 @@
     "mongoose": "^8.5.4",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.14",
+    "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   }
 }

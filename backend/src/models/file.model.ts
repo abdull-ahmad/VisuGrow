@@ -1,18 +1,18 @@
 import mongoose from 'mongoose';
 
 const schema = new mongoose.Schema({
-    files: [
-        {
-          fileUri: {
-            type: String,
-            required: true,
-          },
-          publicId: {
-            type: String,
-            required: true,
-          },
-        },
-      ],
+    name: {
+        type: String,
+        required: true,
+    },
+    headers: {
+        type: [String],
+        required: true,
+    },
+    fileData: {
+        type: mongoose.Schema.Types.Mixed,
+        required: true,
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
