@@ -26,7 +26,6 @@ export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
       user: req.userId,
     });
 
-
     await file.save();
 
     fs.unlinkSync(req.file.path);
