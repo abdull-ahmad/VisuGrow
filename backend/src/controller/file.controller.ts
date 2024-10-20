@@ -10,6 +10,7 @@ interface CustomRequest extends Request {
 }
 
 export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
+  
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -37,3 +38,21 @@ export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
   }
   
 };
+
+export const deleteFile: RequestHandler = async (req: CustomRequest, res) => {
+  try {
+    const fileName = req.params.fileName;
+    const userId = req.userId;
+
+    const file = await File.findOneAndDelete({ name: fileName, user: userId });
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+
+    res.status(200).json({ message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
