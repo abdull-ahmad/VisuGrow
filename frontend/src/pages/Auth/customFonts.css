@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Rowdies:wght@400;700&display=swap');
+
+.font-rowdies{
+    font-family: 'Rowdies', sans-serif;
+}
+
+.customColorButton{
+    background-color: #053252;
+}
+
+.customBackground{
+    background-image: url('/background.png');
+    background-size: contain;
+    background-repeat: repeat;
+}
+
+body{
+    background-color: #4A8CBB;
+}
