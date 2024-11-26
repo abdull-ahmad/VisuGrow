@@ -7,7 +7,7 @@ import ChangePassword from "./pages/Auth/ChangePassword"
 import VerifyEmail from "./pages/Auth/VerifyEmail"
 import { useAuthStore } from "./store/authStore"
 import { useEffect } from "react"
-import HomePage from "./pages/Auth/Main/HomePage"
+import HomePage from "./pages/Main/HomePage"
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
