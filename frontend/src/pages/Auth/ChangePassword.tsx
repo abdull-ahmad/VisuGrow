@@ -5,7 +5,7 @@ const ChangePassword = () => {
         <div className='flex flex-row'>
             <div className='flex flex-col w-1/2 justify-center items-center min-h-screen customBackground'>
                 <form className='flex flex-col bg-white p-4 w-3/4 rounded-lg' >
-                    <h1 className='text-3xl font-rowdies py-8 text-center'> Reset <br /> Password </h1>
+                    <h1 className='text-3xl font-rowdies py-8 text-center'> Reset <br/> Password </h1>
                     <label className='text-l font-sans py-2'> New Password </label>
                     <input type='password' className='border-2 border-gray-300 rounded-md p-2' />
                     <label className='text-l font-sans py-2'> Confirm Password </label>

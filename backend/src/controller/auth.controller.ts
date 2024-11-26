@@ -1,17 +1,21 @@
-import { RequestHandler } from "express";
+import { RequestHandler, Request } from "express";
 import { User } from "../models/user.model";
 import { generateToken } from "../utils/generateToken";
-import { sendEmailVerification, sendPasswordResetEmail , sendResetSuccessEmail} from "../mail/emails";
-import crypto from "crypto"; 
+import { sendEmailVerification, sendPasswordResetEmail, sendResetSuccessEmail } from "../mail/emails";
+import crypto from "crypto";
 import bcrypt from "bcrypt";
 
+interface CustomRequest extends Request {
+  userId?: string;
+}
+
 export const register: RequestHandler = async (req, res) => {
-  const { email, password } = req.body;
+  const { name, email, password } = req.body;
   try {
-    if (!email || !password) {
+    if (!email || !password || !name) {
       return res
         .status(400)
-        .json({ message: "Email and password are required" });
+        .json({ message: "Name, Email and password are required" });
     }
     const userAlreadyExists = await User.findOne({
       email,
@@ -28,6 +32,7 @@ export const register: RequestHandler = async (req, res) => {
     ).toString();
 
     const user = new User({
+      name,
       email,
       password: hashedPassword,
       verificationToken,
@@ -101,10 +106,12 @@ export const login: RequestHandler = async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    res.status(200).json({ success: true, message: "Logged in" , user: {
-      ...user.toObject(),
-      password: undefined,
-    }});
+    res.status(200).json({
+      success: true, message: "Logged in", user: {
+        ...user.toObject(),
+        password: undefined,
+      }
+    });
   } catch (error) {
     res.status(400).json({ success: false, message: "Something went wrong" });
   }
@@ -123,7 +130,7 @@ export const forgotPassword: RequestHandler = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    const  resetToken = crypto.randomBytes(20).toString("hex");
+    const resetToken = crypto.randomBytes(20).toString("hex");
     const resetTokenExpiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000);
 
     user.resetPasswordToken = resetToken;
@@ -131,7 +138,7 @@ export const forgotPassword: RequestHandler = async (req, res) => {
 
     await user.save();
 
-    await sendPasswordResetEmail(user.email, `${process.env.CLIENT_URL}/reset-password/${resetToken}` );
+    await sendPasswordResetEmail(user.email, `${process.env.CLIENT_URL}/reset-password/${resetToken}`);
 
     res.status(200).json({ success: true, message: "Password reset email sent" });
 
@@ -166,6 +173,18 @@ export const resetPassword: RequestHandler = async (req, res) => {
     await sendResetSuccessEmail(user.email);
 
     res.status(200).json({ success: true, message: "Password reset successful" });
+  } catch (error) {
+    res.status(400).json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export const checkAuth: RequestHandler = async (req: CustomRequest, res) => {
+  try {
+    const user = await User.findById(req.userId).select("-password");
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found" });
+    }
+    res.status(200).json({ success: true, user });
   } catch (error) {
     res.status(400).json({ success: false, message: "Something went wrong" });
   }
