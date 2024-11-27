@@ -45,7 +45,7 @@ function App() {
         <Route path="/" element=
           {
             <ProtectedRoute>
-              <HomePage/>
+              <HomePage />
             </ProtectedRoute>
           }
         />
@@ -59,9 +59,17 @@ function App() {
             <LoginPage />
           </RedirectAuthUser>
         } />
-        <Route path="/forgot" element={<ForgotPassword />} />
-        <Route path="/reset" element={<ChangePassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgot" element={
+          <RedirectAuthUser>
+            <ForgotPassword />
+          </RedirectAuthUser>
+        } />
+        <Route path="/reset-password/:token" element={
+          <RedirectAuthUser>
+            <ChangePassword />
+          </RedirectAuthUser>
+        } />
       </Routes>
 
       <Toaster />

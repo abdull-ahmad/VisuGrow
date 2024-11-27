@@ -10,17 +10,54 @@ const RegisterPage = () => {
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
     const [confirmPassword, setConfirmPassword] = React.useState('');
-    
+
+    const [passwordError, setPasswordError] = React.useState('');
+    const [nameError, setNameError] = React.useState('');
+    const [emailError, setEmailError] = React.useState('');
+
     const navigate = useNavigate();
 
-    const { signup , error , isLoading } = useAuthStore();
+    const { signup, error, isLoading } = useAuthStore();
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        try{
+        const namePattern = /^[a-zA-Z\s]+$/;
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+
+        // Validate name
+        if (!namePattern.test(name)) {
+            setNameError('Name can only contain letters and spaces');
+            return;
+        } else {
+            setNameError('');
+        }
+
+        // Validate email
+        if (!emailPattern.test(email)) {
+            setEmailError('Invalid email address');
+            return;
+        } else {
+            setEmailError('');
+        }
+
+        // Validate password
+        if (!passwordPattern.test(password)) {
+            setPasswordError('Password must be at least 8 characters long and contain both letters and numbers');
+            return;
+        } else {
+            setPasswordError('');
+        }
+
+        if (password !== confirmPassword) {
+            setPasswordError('Passwords do not match');
+            return;
+        }
+
+        try {
             await signup(email, password, name);
-            navigate ("/verify-email");
+            navigate("/verify-email");
         } catch (error) {
             console.log(error);
         }
@@ -42,43 +79,49 @@ const RegisterPage = () => {
 
             <div className='flex flex-col w-1/2 justify-center items-center min-h-screen customBackground'>
                 <form onSubmit={handleSignUp} className='flex flex-col bg-white p-4 w-3/4 rounded-lg '>
-                    <h1 className='text-3xl font-rowdies py-8 text-center'> SignUp </h1>
-                    <label className='text-l font-sans py-2'> Name </label>
+                    <h1 className='text-3xl font-rowdies py-8 text-center'> Sign Up </h1>
+                    <label className='text-l font-poppins py-2'> Name </label>
                     <input
                         className='border-2 border-gray-300 rounded-md p-2'
                         type='text'
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        required
                     />
-                    <label className='text-l font-sans py-2'> Email </label>
+                    {nameError && <p className='text-red-500 text-sm font-poppins'>{nameError}</p>}
+                    <label className='text-l font-poppins py-2'> Email </label>
                     <input
                         className='border-2 border-gray-300 rounded-md p-2'
                         type='email'
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
                     />
-                    <label className='text-l font-sans py-2'> Password </label>
+                    {emailError && <p className='text-red-500 text-sm font-poppins'>{emailError}</p>}
+                    <label className='text-l font-poppins py-2'> Password </label>
                     <input
                         className='border-2 border-gray-300 rounded-md p-2'
                         type='password'
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        required
                     />
-                    <label className='text-l font-sans py-2'> Confirm Password </label>
+                    <label className='text-l font-poppins py-2'> Confirm Password </label>
                     <input
                         className='border-2 border-gray-300 rounded-md p-2'
                         type='password'
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
                     />
+                    {passwordError && <p className='text-red-500 text-sm font-poppins'>{passwordError}</p>}
+                    {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}
 
-                    {error && <p className='text-red-500 text-sm'>{error}</p>}
-
-                    <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/2 self-center'> {isLoading ? <Loader className='animate-spin mx-auto' size= {24} /> : "Sign Up" } </button>
-                    <p className='py-5 text-center'>
+                    <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/2 self-center'> {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : "Sign Up"} </button>
+                    <p className='py-5 text-center font-poppins'>
                         Already a member?
                         <span className="font-bold ml-1">
-                            <a href="/login">Login</a>
+                            <a href="/login" className='hover:underline'>Sign in</a>
                         </span>
                     </p>
                 </form>

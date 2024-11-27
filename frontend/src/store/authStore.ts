@@ -8,19 +8,23 @@ axios.defaults.withCredentials = true;
 interface AuthState {
     user: any;
     isAuthenticated: boolean;
+    message: string | null;
     error: string | null;
     isLoading: boolean;
     isCheckingAuth: boolean;
     signup: (email: string, password: string, name: string) => Promise<void>;
     verifyEmail: (code: string) => Promise<void>;
-    login: (email: string, password: string) => Promise<void>;  
+    login: (email: string, password: string) => Promise<void>;
     checkAuth: () => Promise<void>;
+    forgotPassword: (email: string) => Promise<void>;  
+    resetPassword: (password: string, token: string | undefined) => Promise<void>;  
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     isAuthenticated: false,
     error: null,
+    message: null,
     isLoading: false,
     isCheckingAuth: true,
 
@@ -29,8 +33,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             const res = await axios.post(`${API_URL}/register`, { email, password, name });
             set({ user: res.data.user, isAuthenticated: true, isLoading: false });
-        } catch (error:any) {
-            set({ error: error.res.data.message || "Error signing up", isLoading: false });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                set({ error: error.response.data.message || "Error Signing Up", isLoading: false });
+            }
             throw error;
         }
     },
@@ -39,22 +45,22 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
             const res = await axios.post(`${API_URL}/verify-email`, { code });
             set({ user: res.data.user, isAuthenticated: true, isLoading: false });
-        } catch (error:any) {
-            set({ error: error.res.data.message || "Error verifying email", isLoading: false });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                set({ error: error.response.data.message || "Error Verifying Email", isLoading: false });
+            }
             throw error;
         }
     },
     login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
-        try{
+        try {
             const res = await axios.post(`${API_URL}/login`, { email, password });
             set({ user: res.data.user, isAuthenticated: true, isLoading: false });
-        }catch (error) {
+        } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 set({ error: error.response.data.message || "Error logging in", isLoading: false });
-              } else {
-                set({ error: "Error logging in", isLoading: false });
-              }
+            }
             throw error;
         }
     },
@@ -64,8 +70,32 @@ export const useAuthStore = create<AuthState>((set) => ({
             const res = await axios.get(`${API_URL}/checkAuth`);
             set({ user: res.data.user, isAuthenticated: true, isCheckingAuth: false });
         } catch (error) {
-            set({ error:null , isCheckingAuth: false });
+            set({ error: null, isCheckingAuth: false });
             throw error;
         }
     },
+    forgotPassword: async (email: string) => {
+        set({ isLoading: true, error: null, message: null });
+        try {
+            const res = await axios.post(`${API_URL}/forgot-password`, { email });
+            set({ message: res.data.message, isLoading: false });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                set({ error: error.response.data.message || "Error", isLoading: false });
+            }
+            throw error;
+        }
+    },
+    resetPassword: async (password: string, token: string | undefined ) => {
+        set({ isLoading: true, error: null, message: null });
+        try {
+            const res = await axios.post(`${API_URL}/reset-password/${token}`, { password });
+            set({ message: res.data.message, isLoading: false });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                set({ error: error.response.data.message || "Error Resetting Password", isLoading: false });
+            }
+            throw error;
+        }
+    }
 }));
