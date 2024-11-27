@@ -28,8 +28,10 @@ const VerifyEmail = () => {
         <div className='flex flex-row'>
             <div className='flex flex-col w-1/2'>
                 <div className='flex flex-row'>
-                    <img src="/Logo.png" alt="logo" width={120} height={120} />
-                    <h1 className='text-3xl font-rowdies py-8'> VisuGrow </h1>
+                    <a href="/">
+                        <img src="/Logo.png" alt="logo" width={120} height={120} />
+                        <h1 className='text-3xl font-rowdies py-8'> VisuGrow </h1>
+                    </a>
                 </div>
             </div>
             <div className='flex flex-col w-1/2 justify-center items-center min-h-screen customBackground'>
