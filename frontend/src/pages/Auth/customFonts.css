@@ -20,9 +20,9 @@
 }
 
 .customColorText{
-    color: #4A8CBB
+    color: #4A8CBB;
 }
 
-body{
+.auth-page {
     background-color: #4A8CBB;
 }

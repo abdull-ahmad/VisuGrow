@@ -8,6 +8,7 @@ import VerifyEmail from "./pages/Auth/VerifyEmail"
 import { useAuthStore } from "./store/authStore"
 import { useEffect } from "react"
 import HomePage from "./pages/Main/HomePage"
+import LoadingSpinner from "./components/LoadingSpinner"
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -36,7 +37,7 @@ function App() {
   }, [checkAuth]);
 
   if (isCheckingAuth) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner/> ; 
   }
 
   return (

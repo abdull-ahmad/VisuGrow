@@ -3,7 +3,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 
-import "./customFonts.css"
+import "./customFonts.css";
 const RegisterPage = () => {
 
     const [name, setName] = React.useState('');
@@ -66,7 +66,7 @@ const RegisterPage = () => {
 
     return (
 
-        <div className='flex flex-row min-h-screen overflow-hidden'>
+        <div className='flex flex-row min-h-screen overflow-hidden auth-page'>
             <div className='flex flex-col w-1/2'>
                 <a href="/" className='flex flex-row'>
                     <img src="/Logo.png" alt="logo" width={120} height={120} />

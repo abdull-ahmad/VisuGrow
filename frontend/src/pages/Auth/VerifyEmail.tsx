@@ -25,7 +25,7 @@ const VerifyEmail = () => {
         }
     }
     return (
-        <div className='flex flex-row'>
+        <div className='flex flex-row auth-page'>
             <div className='flex flex-col w-1/2'>
                 <div className='flex flex-row'>
                     <a href="/">

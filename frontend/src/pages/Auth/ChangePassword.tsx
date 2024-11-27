@@ -46,7 +46,7 @@ const ChangePassword = () => {
     }
 
     return (
-        <div className='flex flex-row'>
+        <div className='flex flex-row auth-page'>
             <div className='flex flex-col w-1/2 justify-center items-center min-h-screen customBackground'>
                 <form onSubmit={handleChangePassword} className='flex flex-col bg-white p-4 w-3/4 rounded-lg' >
                     <h1 className='text-3xl font-rowdies py-8 text-center'> Reset <br /> Password </h1>
