@@ -117,7 +117,7 @@ const RegisterPage = () => {
                     {passwordError && <p className='text-red-500 text-sm font-poppins'>{passwordError}</p>}
                     {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}
 
-                    <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/2 self-center'> {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : "Sign Up"} </button>
+                    <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/3 self-center'> {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : "Sign Up"} </button>
                     <p className='py-5 text-center font-poppins'>
                         Already a member?
                         <span className="font-bold ml-1">

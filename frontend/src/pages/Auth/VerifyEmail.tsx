@@ -45,7 +45,7 @@ const VerifyEmail = () => {
 
                     {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}
 
-                    <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 mb-8 w-1/2 self-center'> {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : "Verify"} </button>
+                    <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 mb-8 w-1/3 self-center'> {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : "Verify"} </button>
 
                 </form>
             </div>

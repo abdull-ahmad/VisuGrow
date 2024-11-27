@@ -37,12 +37,12 @@ const ForgotPassword = () => {
                             />
 
                             {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}
-                            <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/2 self-center'> {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : "Send Link"} </button>
+                            <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/3 self-center'> {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : "Send Link"} </button>
                             <div className='py-5 text-center flex flex-col gap-3'>
                                 <p className='font-poppins'>
                                     Not a Member?
                                     <span className="font-bold ml-1">
-                                        <a href="/RegisterPage" className='hover:underline'>Sign Up</a>
+                                        <a href="/register" className='hover:underline'>Sign Up</a>
                                     </span>
                                 </p>
                             </div>

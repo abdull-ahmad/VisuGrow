@@ -47,7 +47,7 @@ const LoginPage = () => {
                     {error && <p className='text-red-500 text-sm'>{error}</p>}
 
                     <button 
-                    className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/2 self-center'
+                    className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/3 self-center'
                     disabled={isLoading}    
                     > {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : "Sign In"} </button>
                     <div className='py-5 text-center flex flex-col gap-3'>
