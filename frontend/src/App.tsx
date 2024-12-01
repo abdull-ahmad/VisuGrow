@@ -9,6 +9,7 @@ import { useAuthStore } from "./store/authStore"
 import { useEffect } from "react"
 import HomePage from "./pages/Main/HomePage"
 import LoadingSpinner from "./components/LoadingSpinner"
+import UploadDataPage from "./pages/Data/UploadDataPage"
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -37,7 +38,7 @@ function App() {
   }, [checkAuth]);
 
   if (isCheckingAuth) {
-    return <LoadingSpinner/> ; 
+    return <LoadingSpinner />;
   }
 
   return (
@@ -60,7 +61,9 @@ function App() {
             <LoginPage />
           </RedirectAuthUser>
         } />
+
         <Route path="/verify-email" element={<VerifyEmail />} />
+
         <Route path="/forgot" element={
           <RedirectAuthUser>
             <ForgotPassword />
@@ -70,6 +73,12 @@ function App() {
           <RedirectAuthUser>
             <ChangePassword />
           </RedirectAuthUser>
+        } />
+        
+        <Route path="/upload" element={
+          <ProtectedRoute>
+            <UploadDataPage />
+          </ProtectedRoute>
         } />
       </Routes>
 

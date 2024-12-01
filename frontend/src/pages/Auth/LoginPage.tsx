@@ -3,6 +3,8 @@ import { Loader } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 
+import "./custom.css";
+
 const LoginPage = () => {
 
     const [email, setEmail] = React.useState('');

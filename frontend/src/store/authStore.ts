@@ -18,6 +18,7 @@ interface AuthState {
     checkAuth: () => Promise<void>;
     forgotPassword: (email: string) => Promise<void>;  
     resetPassword: (password: string, token: string | undefined) => Promise<void>;  
+    logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -64,6 +65,16 @@ export const useAuthStore = create<AuthState>((set) => ({
             throw error;
         }
     },
+    logout: async () => {
+		set({ isLoading: true, error: null });
+		try {
+			await axios.post(`${API_URL}/logout`);
+			set({ user: null, isAuthenticated: false, error: null, isLoading: false });
+		} catch (error) {
+			set({ error: "Error logging out", isLoading: false });
+			throw error;
+		}
+	},
     checkAuth: async () => {
         set({ isCheckingAuth: true });
         try {

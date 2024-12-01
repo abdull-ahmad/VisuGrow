@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import "./customFonts.css"
+import "./custom.css";
 
 const VerifyEmail = () => {
 

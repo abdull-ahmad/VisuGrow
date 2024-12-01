@@ -2,6 +2,8 @@ import React from 'react'
 import { ArrowLeftIcon, Mail, Loader } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
+import "./custom.css";
+
 
 const ForgotPassword = () => {
 

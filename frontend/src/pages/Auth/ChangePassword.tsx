@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+import "./custom.css";
+
 const ChangePassword = () => {
 
     const [password, setPassword] = React.useState('');
