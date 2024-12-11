@@ -81,7 +81,6 @@ function inferDataType(value: any): DataType {
     }
   
     const headers = records[0].map((header: any) => header?.toString() || '');
-    console.log('headers', headers);
     const data = records.slice(1).map((record: any[]) => {
       return record.map((value) => {
         if (value instanceof Date) {

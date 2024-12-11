@@ -21,3 +21,7 @@
 .sidebar {
     background-color: #4A8CBB;
 }
+.customColorButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

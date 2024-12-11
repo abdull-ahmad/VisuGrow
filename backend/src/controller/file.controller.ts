@@ -6,7 +6,6 @@ import { File } from "../models/file.model";
 
 interface CustomRequest extends Request {
   userId?: string;
-  file?: Express.Multer.File;
 }
 
 export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
@@ -17,8 +16,6 @@ export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
     }
 
     const { headers, data } = parseFile(req.file.path);
-
-    console.log(data)
 
     const file = new File({
       name: req.file.originalname,
