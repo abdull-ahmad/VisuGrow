@@ -4,7 +4,7 @@ import Modal from '../../components/Modal';
 import SheetIcon from '../../Icons/SheetIcon'
 import StoreIcon from '../../Icons/StoreIcon'
 import UploadIcon from '../../Icons/UploadIcon'
-import { Loader, LogOut } from 'lucide-react'
+import { Loader, LogOut , File } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import 'react-datasheet-grid/dist/style.css'
 import * as XLSX from 'xlsx';
@@ -32,6 +32,7 @@ const UploadDataPage = () => {
     const [colDefs, setColDefs] = useState<Column<RowData>[]>([]);
     const [columnDefinitions, setColumnDefinitions] = useState<ColumnDefinition[]>([]);
     const [isColumnFormOpen, setIsColumnFormOpen] = useState(false);
+    const [fileName, setFileName] = useState<string | null>(null);
     const { logout, isLoading, error } = useAuthStore();
 
     const handleLogout = async () => { logout(); }
@@ -151,6 +152,7 @@ const UploadDataPage = () => {
                 // Setting State
                 setColDefs(columns);
                 setRowData(rowData);
+                setFileName(file.name);
                 setIsModalOpen(true); // Open the modal after setting the data
             } else if (fileExtension === 'csv') {
                 console.log('CSV file handler');
@@ -174,6 +176,7 @@ const UploadDataPage = () => {
                         // Setting State
                         setColDefs(columns);
                         setRowData(rowData);
+                        setFileName(file.name);
                         setIsModalOpen(true); // Open the modal after setting the data
                     },
                     header: true,
@@ -205,6 +208,12 @@ const UploadDataPage = () => {
 
     const closeModal = () => setIsModalOpen(false);
 
+    const clearFile = () => {
+        setFileName(null);
+        setRowData([]);
+        setColDefs([]);
+    };
+
     return (
         <div className='flex flex-row min-h-screen '>
             <div className='flex flex-col sidebar min-w-fit justify-between'>
@@ -221,36 +230,54 @@ const UploadDataPage = () => {
             <div className='flex flex-col min-h-screen w-full mainCenter'>
                 <h1 className='text-3xl font-rowdies text-center py-8'> Upload Data </h1>
                 <div className='flex flex-row justify-center items-center'>
-                    <form onSubmit={openModal} className='flex flex-row bg-white p-4 w-3/4 min-w-fit rounded-2xl border-2  border-black py-10'>
-                        <UploadIcon />
-                        <div className='flex flex-col w-3/4'>
-                            <label className='text-xl font-rowdies py-2'> Upload Data </label>
-                            <input
-                                className='border-2 border-dotted border-gray-300 rounded-md p-2'
-                                type='file'
-                                accept='.csv, .json, .xlsx, .xls'
-                                onChange={handleUpload}
-                                id="fileInput"
-                            />
+                    {!fileName ? (
+                        <div className='flex flex-row bg-white p-4 w-3/4 min-w-fit rounded-2xl border-2 border-black py-10'>
+                            <UploadIcon />
+                            <div className='flex flex-col w-3/4'>
+                                <label className='text-xl font-rowdies py-2'> Upload Data </label>
+                                <input
+                                    className='border-2 border-dotted border-gray-300 rounded-md p-2'
+                                    type='file'
+                                    accept='.csv, .json, .xlsx, .xls'
+                                    onChange={handleUpload}
+                                    id="fileInput"
+                                />
+                            </div>
                         </div>
-                        <div className='flex flex-col w-1/4 justify-center items-center'>
-                            <button
-                                type='button'
-                                className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'
-                            >
-                                {isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : 'Clear'}
-                            </button>
+                    ) : (
+                        <div className='flex flex-row bg-white p-4 w-3/4 min-w-fit rounded-2xl border-2 border-black py-10'>
+                            <UploadIcon />
+                            <div className='flex flex-col w-3/4'>
+                                <h2 className='text-xl font-rowdies'>Uploaded File</h2>
+                                <div className='flex flex-row border-2 border-dotted border-gray-300 rounded-md p-2 mt-2'>
+                                    <File/>
+                                    <label className='text-xl '>  {fileName}</label>
+                                </div>
+                            </div>
+                            <div className='flex flex-col w-1/4 items-center'>
+                                <button
+                                    className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'
+                                    onClick={openModal}
+                                >
+                                    Reopen File
+                                </button>
+                                <button
+                                    className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'
+                                    onClick={clearFile}
+                                >
+                                    Clear
+                                </button>
+                            </div>
                         </div>
-
-                        <Modal isOpen={isModalOpen} onClose={closeModal}>
-                            <DataSheetGrid
-                                value={rowData}
-                                onChange={setRowData}
-                                columns={colDefs}
-                            />
-                        </Modal>
-                    </form>
+                    )}
                 </div>
+                <Modal isOpen={isModalOpen} onClose={closeModal}>
+                    <DataSheetGrid
+                        value={rowData}
+                        onChange={setRowData}
+                        columns={colDefs}
+                    />
+                </Modal>
                 <div className='flex flex-row justify-center items-center pt-5'>
                     <div className='flex flex-row bg-white p-4 w-3/4 rounded-2xl border-2 border-black min-w-fit py-10'>
                         <SheetIcon />
