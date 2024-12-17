@@ -1,7 +1,4 @@
 import { RequestHandler, Request } from "express";
-import { parseFile } from "../utils/fileParser";
-import fs from "fs";
-
 import { File } from "../models/file.model";
 
 interface CustomRequest extends Request {
@@ -11,27 +8,27 @@ interface CustomRequest extends Request {
 export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
   
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
+    const userId = req.userId;
+    const { rows, columns, fileName } = req.body;
 
-    const { headers, data } = parseFile(req.file.path);
+    console.log('userId:', userId);
+    console.log('columns:', columns);
+    console.log('rows:', rows);
 
+    
     const file = new File({
-      name: req.file.originalname,
-      headers: headers,
-      fileData: data,
-      user: req.userId,
+      name: fileName,
+      user: userId,
+      headers: columns,
+      fileData: rows,
     });
 
     await file.save();
 
-    fs.unlinkSync(req.file.path);
-    
-    res.status(201).json({ message: "File uploaded successfully", file });
+    res.status(200).json({ message: 'File uploaded successfully' });
   } catch (error) {
-    console.error("Error uploading file:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error('Error uploading file:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
   
 };

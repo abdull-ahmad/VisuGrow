@@ -25,8 +25,6 @@ function readFile(filePath: string): Buffer {
     }
 }
 
-
-
 function inferDataType(value: any): DataType {
     console.log('value', value);
   

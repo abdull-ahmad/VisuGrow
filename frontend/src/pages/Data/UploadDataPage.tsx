@@ -4,7 +4,7 @@ import Modal from '../../components/Modal';
 import SheetIcon from '../../Icons/SheetIcon'
 import StoreIcon from '../../Icons/StoreIcon'
 import UploadIcon from '../../Icons/UploadIcon'
-import { Loader, LogOut , File } from 'lucide-react'
+import { Loader, LogOut, File } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import 'react-datasheet-grid/dist/style.css'
 import * as XLSX from 'xlsx';
@@ -18,6 +18,7 @@ import {
     intColumn,
     percentColumn,
 } from 'react-datasheet-grid'
+import { useDataStore } from '../../store/dataStore';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -33,14 +34,19 @@ const UploadDataPage = () => {
     const [columnDefinitions, setColumnDefinitions] = useState<ColumnDefinition[]>([]);
     const [isColumnFormOpen, setIsColumnFormOpen] = useState(false);
     const [fileName, setFileName] = useState<string | null>(null);
+    const [isSheetCreated, setIsSheetCreated] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const [replaceValue, setReplaceValue] = useState('');
+    const [isSearchReplaceOpen, setIsSearchReplaceOpen] = useState(false);
     const { logout, isLoading, error } = useAuthStore();
+    const { saveFile } = useDataStore();
 
     const handleLogout = async () => { logout(); }
 
     const openModal = () => setIsModalOpen(true);
 
     const determineColumnType = (values: (string | number | Date)[]): 'text' | 'number' | 'date' | 'percent' => {
-        const dateRegex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/; // Matches MM/DD/YYYY format
+        const dateRegex = /^(?:(0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])[\/\-](\d{4})|(\d{4})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])|([12][0-9]{3})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])|(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d+)?(Z|([+-])([01]\d|2[0-3]):([0-5]\d)))$/;
         const numberRegex = /^-?\d+(\.\d+)?$/; // Matches integers and floating-point numbers
         const percentRegex = /^-?\d+(\.\d+)?%$/; // Matches percentage values
 
@@ -49,7 +55,7 @@ const UploadDataPage = () => {
                 return 'number';
             } else if (percentRegex.test(value.toString())) {
                 return 'percent';
-            } else if (value instanceof Date || dateRegex.test(value.toString())) {
+            } else if (dateRegex.test(value.toString())) {
                 return 'date';
             }
         }
@@ -203,6 +209,7 @@ const UploadDataPage = () => {
         setColDefs(columns);
         setRowData([]);
         setIsModalOpen(true);
+        setIsSheetCreated(true);
         setIsColumnFormOpen(false);
     };
 
@@ -212,6 +219,35 @@ const UploadDataPage = () => {
         setFileName(null);
         setRowData([]);
         setColDefs([]);
+    };
+
+    const handleSearchReplace = () => {
+        setIsSearchReplaceOpen(true);
+    };
+
+    const handleSearchReplaceSubmit = () => {
+        const updatedRowData = rowData.map(row => {
+            const updatedRow = { ...row };
+            Object.keys(updatedRow).forEach(key => {
+                if (updatedRow[key] === searchValue) {
+                    updatedRow[key] = replaceValue;
+                }
+            });
+            return updatedRow;
+        });
+        setRowData(updatedRowData);
+        setIsSearchReplaceOpen(false);
+    };
+
+    const handleFileSave = async () => {
+        try {
+            const columnNames = colDefs.map(col => col.title);
+            await saveFile({ rows: rowData, columns: columnNames, fileName: fileName || 'data' });
+            alert('File saved successfully!');
+        } catch (error) {
+            console.error('Error saving file:', error);
+            alert('Failed to save file.');
+        }
     };
 
     return (
@@ -250,7 +286,7 @@ const UploadDataPage = () => {
                             <div className='flex flex-col w-3/4'>
                                 <h2 className='text-xl font-rowdies'>Uploaded File</h2>
                                 <div className='flex flex-row border-2 border-dotted border-gray-300 rounded-md p-2 mt-2'>
-                                    <File/>
+                                    <File />
                                     <label className='text-xl '>  {fileName}</label>
                                 </div>
                             </div>
@@ -271,13 +307,54 @@ const UploadDataPage = () => {
                         </div>
                     )}
                 </div>
-                <Modal isOpen={isModalOpen} onClose={closeModal}>
+                <Modal isOpen={isModalOpen} onClose={closeModal} onSearchReplace={handleSearchReplace} onSave={handleFileSave}>
                     <DataSheetGrid
                         value={rowData}
                         onChange={setRowData}
                         columns={colDefs}
                     />
                 </Modal>
+                {isSearchReplaceOpen && (
+                    <Modal isOpen={isSearchReplaceOpen} onClose={() => setIsSearchReplaceOpen(false)} showSaveButton={false} showSearchReplaceButton={false} size="small">
+                        <form onSubmit={(e) => { e.preventDefault(); handleSearchReplaceSubmit(); }}>
+                            <h2 className='text-xl font-rowdies py-2'>Search and Replace</h2>
+                            <div className='mb-4'>
+                                <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='searchValue'>
+                                    Search Value
+                                </label>
+                                <input
+                                    id='searchValue'
+                                    type='text'
+                                    value={searchValue}
+                                    onChange={(e) => setSearchValue(e.target.value)}
+                                    className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                                    required
+                                />
+                            </div>
+                            <div className='mb-4'>
+                                <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='replaceValue'>
+                                    Replace Value
+                                </label>
+                                <input
+                                    id='replaceValue'
+                                    type='text'
+                                    value={replaceValue}
+                                    onChange={(e) => setReplaceValue(e.target.value)}
+                                    className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                                    required
+                                />
+                            </div>
+                            <div className='flex justify-end'>
+                                <button
+                                    type='submit'
+                                    className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl'
+                                >
+                                    Replace
+                                </button>
+                            </div>
+                        </form>
+                    </Modal>
+                )}
                 <div className='flex flex-row justify-center items-center pt-5'>
                     <div className='flex flex-row bg-white p-4 w-3/4 rounded-2xl border-2 border-black min-w-fit py-10'>
                         <SheetIcon />
@@ -299,7 +376,7 @@ const UploadDataPage = () => {
                     </div>
                 </div>
                 {isColumnFormOpen && (
-                    <Modal isOpen={isColumnFormOpen} onClose={() => setIsColumnFormOpen(false)}>
+                    <Modal isOpen={isColumnFormOpen} onClose={() => setIsColumnFormOpen(false)} showSaveButton={false} showSearchReplaceButton={false} >
                         <form onSubmit={handleColumnFormSubmit}>
                             <h2 className='text-xl font-rowdies py-2'>Enter Column Names and Types</h2>
                             {columnDefinitions.map((colDef, index) => (

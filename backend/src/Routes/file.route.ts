@@ -7,7 +7,7 @@ import { verifyToken } from '../middleware/verifyToken';
 
 const fileRouter = Router();  
 
-fileRouter.post('/upload', verifyToken, upload.single('file'), uploadFile );
+fileRouter.post('/upload', verifyToken, uploadFile );
 fileRouter.delete('/delete/:fileName', verifyToken, deleteFile );
 
 
