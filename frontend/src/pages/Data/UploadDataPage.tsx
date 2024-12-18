@@ -254,8 +254,8 @@ const UploadDataPage = () => {
         <div className='flex flex-row min-h-screen '>
             <div className='flex flex-col sidebar min-w-fit justify-between'>
                 <a href="/" className='flex flex-row items-start mr-5'>
-                    <img src="/Logo.png" alt="logo" width={110} height={110} />
-                    <h1 className='text-2xl font-rowdies py-8 '> VisuGrow </h1>
+                    <img src="/Logo.png" alt="logo"/>
+                    
                 </a>
                 {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}
                 <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl  w-3/4 flex flex-row gap-2' onClick={handleLogout}> {

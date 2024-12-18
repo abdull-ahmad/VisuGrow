@@ -27,9 +27,11 @@ const VerifyEmail = () => {
     <div className="flex flex-row auth-page">
       <div className="flex flex-col w-1/2">
         <a href="/" className="flex flex-row">
-          <img src="/Logo.png" alt="logo" width={120} height={120} />
-          <h1 className="text-3xl font-rowdies py-8"> VisuGrow </h1>
+          <img src="/Logo.png" alt="logo" />  
         </a>
+        <div className='flex justify-center items-center h-4/5'>
+          <img src="/verify.png" alt="banner" />
+        </div>
       </div>
       <div className="flex flex-col w-1/2 justify-center items-center min-h-screen customBackground">
         <form

@@ -69,8 +69,7 @@ const RegisterPage = () => {
         <div className='flex flex-row min-h-screen overflow-hidden auth-page'>
             <div className='flex flex-col w-1/2'>
                 <a href="/" className='flex flex-row'>
-                    <img src="/Logo.png" alt="logo" width={120} height={120} />
-                    <h1 className='text-3xl font-rowdies py-8'> VisuGrow </h1>
+                    <img src="/Logo.png" alt="logo" />
                 </a>
                 <div className='flex justify-center items-center h-4/5'>
                     <img src="/banner.png" alt="banner" />

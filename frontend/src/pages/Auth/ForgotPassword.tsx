@@ -56,9 +56,11 @@ const ForgotPassword = () => {
                             </div>
                             <p className='customColorText text-2xl font-bold py-2 font-poppins'> Email Sent Successfully </p>
                             <p className='text-black text-lg font-poppins'> Please check {email} for the password reset link </p>
-                            <a href="/login" className='customColorText text-xl pt-7 hover:underline' >
-                                <ArrowLeftIcon className='h-6 w-6 inline-block' /> Back to Login
-                            </a>
+                            <button className='customColorButton text-white text-xl py-2 rounded-3xl mt-4 w-1/3 self-center'>
+                                <a href="/login">
+                                    <ArrowLeftIcon className='inline-block ' /> Back to Login
+                                </a>
+                            </button>
                         </div>
                     )
                     }
@@ -67,8 +69,8 @@ const ForgotPassword = () => {
 
             <div className='flex flex-col w-1/2 px-5'>
                 <a href="/" className='flex flex-row justify-end'>
-                    <img src="/Logo.png" alt="logo" width={120} height={120} />
-                    <h1 className='text-3xl font-rowdies py-8'> VisuGrow </h1>
+                    <img src="/Logo.png" alt="logo" />
+
                 </a>
                 <div className='flex justify-center items-center h-4/5'>
                     <img src="/forgotBanner.png" alt="banner" />
