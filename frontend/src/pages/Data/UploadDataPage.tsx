@@ -19,6 +19,7 @@ import {
     percentColumn,
 } from 'react-datasheet-grid'
 import { useDataStore } from '../../store/dataStore';
+import toast from 'react-hot-toast';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -243,7 +244,7 @@ const UploadDataPage = () => {
         try {
             const columnNames = colDefs.map(col => col.title);
             await saveFile({ rows: rowData, columns: columnNames, fileName: fileName || 'data' });
-            alert('File saved successfully!');
+            toast.success('File saved successfully!');
         } catch (error) {
             console.error('Error saving file:', error);
             alert('Failed to save file.');

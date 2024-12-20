@@ -8,6 +8,7 @@ axios.defaults.withCredentials = true;
 interface AuthState {
     user: any;
     isAuthenticated: boolean;
+    isVerified: boolean;    
     message: string | null;
     error: string | null;
     isLoading: boolean;
@@ -24,6 +25,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,
     isAuthenticated: false,
+    isVerified: false,
     error: null,
     message: null,
     isLoading: false,
@@ -57,7 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ isLoading: true, error: null });
         try {
             const res = await axios.post(`${API_URL}/login`, { email, password });
-            set({ user: res.data.user, isAuthenticated: true, isLoading: false });
+            set({ user: res.data.user,isAuthenticated: true, isVerified:res.data.user ,isLoading: false });
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 set({ error: error.response.data.message || "Error logging in", isLoading: false });
@@ -69,7 +71,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 		set({ isLoading: true, error: null });
 		try {
 			await axios.post(`${API_URL}/logout`);
-			set({ user: null, isAuthenticated: false, error: null, isLoading: false });
+			set({ user: null, isAuthenticated: false , error: null, isLoading: false });
 		} catch (error) {
 			set({ error: "Error logging out", isLoading: false });
 			throw error;
@@ -79,7 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ isCheckingAuth: true });
         try {
             const res = await axios.get(`${API_URL}/checkAuth`);
-            set({ user: res.data.user, isAuthenticated: true, isCheckingAuth: false });
+            set({ user: res.data.user,isAuthenticated: true, isVerified:res.data.user ,isCheckingAuth: false });
         } catch (error) {
             set({ error: null, isCheckingAuth: false });
             throw error;

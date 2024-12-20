@@ -46,9 +46,7 @@ function App() {
       <Routes>
         <Route path="/" element=
           {
-            <ProtectedRoute>
-              <HomePage />
-            </ProtectedRoute>
+            <HomePage />
           }
         />
         <Route path="/register" element={
@@ -62,7 +60,12 @@ function App() {
           </RedirectAuthUser>
         } />
 
-        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-email" element={
+          <RedirectAuthUser>
+            <VerifyEmail />
+          </RedirectAuthUser>
+          
+        } />
 
         <Route path="/forgot" element={
           <RedirectAuthUser>
@@ -74,7 +77,7 @@ function App() {
             <ChangePassword />
           </RedirectAuthUser>
         } />
-        
+
         <Route path="/upload" element={
           <ProtectedRoute>
             <UploadDataPage />

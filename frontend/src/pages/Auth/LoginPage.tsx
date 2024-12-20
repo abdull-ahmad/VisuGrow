@@ -12,7 +12,7 @@ const LoginPage = () => {
 
     const navigate = useNavigate();
 
-    const { isLoading, error, login } = useAuthStore();
+    const { isLoading ,error, login } = useAuthStore();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,7 +24,6 @@ const LoginPage = () => {
             console.log(error);
         }
     }
-
 
     return (
         <div className='flex flex-row auth-page'>
