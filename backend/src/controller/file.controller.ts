@@ -11,18 +11,19 @@ export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
     const userId = req.userId;
     const { rows, columns, fileName } = req.body;
 
-    console.log('userId:', userId);
-    console.log('columns:', columns);
-    console.log('rows:', rows);
-
+    const existingFile = await File.findOne({ name: fileName, user: userId });
+    if (existingFile) {
+      return res.status(400).json({ 
+        message: 'A file with this name already exists' 
+      });
+    }
     
     const file = new File({
       name: fileName,
       user: userId,
-      headers: columns,
+      headers: columns, 
       fileData: rows,
-    });
-
+  });
     await file.save();
 
     res.status(200).json({ message: 'File uploaded successfully' });

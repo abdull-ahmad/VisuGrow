@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { upload } from '../middleware/multer';
 import { uploadFile , deleteFile } from '../controller/file.controller';
 
 
