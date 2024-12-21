@@ -115,6 +115,7 @@ const UploadDataPage = () => {
 
                 // Convert rows from array to object
                 const rows = rowsArray.map(row => {
+                    
                     const rowObject: { [key: string]: string | number | Date | null } = {};
                     headers.forEach((header, index) => {
                         rowObject[header] = row[index] !== undefined && row[index] !== '' ? row[index] : null;
@@ -143,6 +144,7 @@ const UploadDataPage = () => {
                         // Use result.meta.fields to get headers
                         const headers = result.meta.fields as string[];
                         const rows = jsonData.map(row => {
+                            console.log(row);
                             const rowObject: { [key: string]: string | number | Date | null } = {};
                             headers.forEach((header) => {
                                 rowObject[header] = row[header] !== undefined && row[header] !== '' ? row[header] : null;
@@ -196,7 +198,6 @@ const UploadDataPage = () => {
                     !isNaN(Date.parse(cellValue)) &&
                     isNaN(Number(cellValue))
                 ) {
-                    // Parse valid date strings and set time to noon to prevent timezone shifts
                     cellValue = new Date(cellValue);
                     cellValue.setHours(12); // Set to noon
                 } else if (typeof cellValue === 'string' && !isNaN(Number(cellValue))) {
@@ -275,7 +276,6 @@ const UploadDataPage = () => {
             <div className='flex flex-col sidebar min-w-fit justify-between'>
                 <a href="/" className='flex flex-row items-start mr-5'>
                     <img src="/Logo.png" alt="logo" />
-
                 </a>
                 {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}
                 <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl  w-3/4 flex flex-row gap-2 justify-center mb-5' onClick={handleLogout}> {
@@ -284,7 +284,7 @@ const UploadDataPage = () => {
             </div>
 
             <div className='flex flex-col min-h-screen w-full mainCenter'>
-                <h1 className='text-3xl font-rowdies text-center py-8'> Upload Data </h1>
+                <h1 className='text-5xl font-rowdies text-center py-8'> Upload Data </h1>
                 <div className='flex flex-row justify-center items-center'>
                     {!fileName ? (
                         <div className='flex flex-row bg-white p-4 w-3/4 min-w-fit rounded-2xl border-2 border-black py-10'>
@@ -329,7 +329,6 @@ const UploadDataPage = () => {
                 </div>
         
                 <Modal isOpen={isModalOpen} onClose={closeModal} onSearchReplace={handleSearchReplace} onSave={handleFileSave}>
-                    
                     <DataSheetGrid
                         value={rowData}
                         onChange={setRowData}

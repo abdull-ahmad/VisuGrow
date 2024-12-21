@@ -5,11 +5,12 @@ import LoginPage from "./pages/Auth/LoginPage"
 import ForgotPassword from "./pages/Auth/ForgotPassword"
 import ChangePassword from "./pages/Auth/ChangePassword"
 import VerifyEmail from "./pages/Auth/VerifyEmail"
-import { useAuthStore } from "./store/authStore"
-import { useEffect } from "react"
+import UploadDataPage from "./pages/Data/UploadDataPage"
 import HomePage from "./pages/Main/HomePage"
 import LoadingSpinner from "./components/LoadingSpinner"
-import UploadDataPage from "./pages/Data/UploadDataPage"
+import DashboardPage from "./pages/Dashboard/DashboardPage"
+import { useAuthStore } from "./store/authStore"
+import { useEffect } from "react"
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -81,6 +82,12 @@ function App() {
         <Route path="/upload" element={
           <ProtectedRoute>
             <UploadDataPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardPage />
           </ProtectedRoute>
         } />
       </Routes>

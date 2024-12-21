@@ -24,6 +24,7 @@ export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
       headers: columns, 
       fileData: rows,
   });
+  
     await file.save();
 
     res.status(200).json({ message: 'File uploaded successfully' });
@@ -33,6 +34,33 @@ export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
   }
   
 };
+
+export const openFile: RequestHandler = async (req: CustomRequest, res) => {
+  try {
+    const userId = req.userId;
+    const fileName = req.params.fileName;
+    const file = await File.findOne({ name: fileName, user: userId });
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    res.status(200).json({ file });
+  } catch (error) {
+    console.error('Error opening file:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+
+}
+
+export const viewFiles: RequestHandler = async (req: CustomRequest, res) => {
+  try {
+    const userId = req.userId;
+    const files = await File.find({ user: userId });
+    res.status(200).json({ files });
+  } catch (error) {
+    console.error('Error viewing files:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+}
 
 export const deleteFile: RequestHandler = async (req: CustomRequest, res) => {
   try {
