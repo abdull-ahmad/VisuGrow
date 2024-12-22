@@ -4,6 +4,7 @@ import axios from 'axios';
 const API_URL = 'http://localhost:5000/api/file';
 
 interface DataStore {
+    fileName: string;
     fileData : any;
     fileHeaders: any;
     files: any[];
@@ -11,6 +12,7 @@ interface DataStore {
     fileerror: string | null;
     isFileLoading: boolean;
     saveFile: (data: { rows: any; columns: any; fileName: string }) => Promise<void>;
+    editFile: (data: { rows: any; columns: any; fileName: string }) => Promise<void>;
     openFile: (fileName: string) => Promise<void>;
     deleteFile: (fileName: string) => Promise<void>;
     viewFile: () => Promise<void>;
@@ -18,6 +20,7 @@ interface DataStore {
 
 export const useDataStore = create<DataStore>((set) => ({
     files: [],
+    fileName: '',
     fileData: null,
     fileHeaders: null,
     fileerror: null,
@@ -55,10 +58,10 @@ export const useDataStore = create<DataStore>((set) => ({
             throw error;
         }
     },
-    deleteFile: async (fileName: string) => {
+    deleteFile: async (fileId: string) => {
         set({ isFileLoading: true, fileerror: null });
         try {
-            await axios.delete(`${API_URL}/delete/${fileName}`, {
+            await axios.delete(`${API_URL}/delete/${fileId}`, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
@@ -71,18 +74,36 @@ export const useDataStore = create<DataStore>((set) => ({
             throw error;
         }
     },
-    openFile: async (fileName: string) => {
+    openFile: async (fileId: string) => {
         set({ isFileLoading: true, fileerror: null });
         try {
-            const response = await axios.get(`${API_URL}/open/${fileName}`, {
+            const response = await axios.get(`${API_URL}/open/${fileId}`, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
-            set({ fileData: response.data.file.fileData, fileHeaders: response.data.file.headers, isFileLoading: false });
+            console.log(response.data);
+            set({ fileData: response.data.file.fileData, fileHeaders: response.data.file.headers, fileName:response.data.file.name ,isFileLoading: false });
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 set({ fileerror: error.response.data.message || "Error Opening File", isFileLoading: false });
+            }
+            throw error;
+        }
+    },
+    editFile: async (data) => {
+        set({ isFileLoading: true, fileerror: null });
+        console.log(data.fileName);
+        try {
+            await axios.put(`${API_URL}/edit/${data.fileName}`, data , {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            set({ message: "File Edited Successfully", isFileLoading: false });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                set({ fileerror: error.response.data.message || "Error Editing File", isFileLoading: false });
             }
             throw error;
         }

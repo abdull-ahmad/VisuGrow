@@ -8,7 +8,6 @@ import "./custom.css";
 const ForgotPassword = () => {
 
     const [email, setEmail] = React.useState('');
-
     const [isSubmitted, setIsSubmitted] = React.useState(false);
     const { isLoading, error, forgotPassword } = useAuthStore();
 
@@ -36,6 +35,7 @@ const ForgotPassword = () => {
                                 type='email'
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                required
                             />
 
                             {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}

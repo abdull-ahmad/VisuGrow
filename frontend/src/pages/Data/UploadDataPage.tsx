@@ -20,6 +20,7 @@ import {
 } from 'react-datasheet-grid'
 import { useDataStore } from '../../store/dataStore';
 import toast from 'react-hot-toast';
+import Sidebar from '../../components/sideBar';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -138,7 +139,7 @@ const UploadDataPage = () => {
                         const jsonData = result.data as Array<{ [key: string]: string | number | Date | null }>;
 
                         if (jsonData.length === 0) {
-                            alert('The CSV file is empty.');
+                            toast.error('No data found in the file');
                             return;
                         }
                         // Use result.meta.fields to get headers
@@ -163,7 +164,7 @@ const UploadDataPage = () => {
                     dynamicTyping: true, // Automatically infer types
                 });
             } else {
-                alert('Unsupported file type');
+                toast.error('Unsupported file format');
             }
         };
 
@@ -273,16 +274,7 @@ const UploadDataPage = () => {
 
     return (
         <div className='flex flex-row min-h-screen '>
-            <div className='flex flex-col sidebar min-w-fit justify-between'>
-                <a href="/" className='flex flex-row items-start mr-5'>
-                    <img src="/Logo.png" alt="logo" />
-                </a>
-                {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}
-                <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl  w-3/4 flex flex-row gap-2 justify-center mb-5' onClick={handleLogout}> {
-                    isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : <LogOut />
-                } <span> Sign Out</span> </button>
-            </div>
-
+            <Sidebar isLoading={isLoading} error={error} handleLogout={handleLogout} />
             <div className='flex flex-col min-h-screen w-full mainCenter'>
                 <h1 className='text-5xl font-rowdies text-center py-8'> Upload Data </h1>
                 <div className='flex flex-row justify-center items-center'>
@@ -472,7 +464,8 @@ const UploadDataPage = () => {
                             </div>
                         </div>
                         <div className='flex flex-col w-1/4 justify-center items-center'>
-                            <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'> Integerate </button>
+                            <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4' 
+                            onClick={() => toast.error('Coming Soon!')}> Integerate </button>
                         </div>
                     </div>
                 </div>
