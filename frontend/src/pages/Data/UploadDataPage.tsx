@@ -4,7 +4,7 @@ import Modal from '../../components/Modal';
 import SheetIcon from '../../Icons/SheetIcon'
 import StoreIcon from '../../Icons/StoreIcon'
 import UploadIcon from '../../Icons/UploadIcon'
-import { Loader, LogOut, File } from 'lucide-react'
+import { File } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 import 'react-datasheet-grid/dist/style.css'
 import * as XLSX from 'xlsx';

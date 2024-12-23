@@ -1,4 +1,3 @@
-import React , {useEffect} from 'react';
 import './custom.css';
 import Area from '../../components/Charts/Area'
 import Line from '../../components/Charts/Line'
