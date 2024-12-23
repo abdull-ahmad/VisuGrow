@@ -17,14 +17,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onSave,children, showSav
 
   const sizeClasses = {
     small: 'w-1/4 max-w-sm',
-    medium: 'w-1/2 max-w-lg',
-    large: 'w-3/4 max-w-5xl',
+    medium: 'w-1/2 max-w-2xl',
+    large: 'w-3/4 max-w-7xl',
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className={`relative bg-white rounded-lg p-4 ${sizeClasses[size]} h-auto max-h-3/4`}>
-        <button className="absolute top-2 right-2 text-gray-500 text-2xl p-2" onClick={onClose}>
+        <button className="absolute top-2 right-2 text-red-600 text-2xl p-2" onClick={onClose}>
           &times;
         </button>
         {showSearchReplaceButton && (

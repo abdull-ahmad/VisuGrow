@@ -145,7 +145,7 @@ const UploadDataPage = () => {
                         // Use result.meta.fields to get headers
                         const headers = result.meta.fields as string[];
                         const rows = jsonData.map(row => {
-                            console.log(row);
+    
                             const rowObject: { [key: string]: string | number | Date | null } = {};
                             headers.forEach((header) => {
                                 rowObject[header] = row[header] !== undefined && row[header] !== '' ? row[header] : null;
@@ -192,7 +192,6 @@ const UploadDataPage = () => {
             headers.forEach((header: string) => {
                 let cellValue = row[header];
                 if (typeof cellValue === 'string' && cellValue.endsWith('%')) {
-                    // Convert "10%" to 0.1
                     cellValue = parseFloat(cellValue.slice(0, -1)) / 100;
                 } else if (
                     typeof cellValue === 'string' &&
@@ -398,7 +397,7 @@ const UploadDataPage = () => {
                     </div>
                 </div>
                 {isColumnFormOpen && (
-                    <Modal isOpen={isColumnFormOpen} onClose={() => setIsColumnFormOpen(false)} showSaveButton={false} showSearchReplaceButton={false} >
+                    <Modal isOpen={isColumnFormOpen} onClose={() => setIsColumnFormOpen(false)} showSaveButton={false} showSearchReplaceButton={false} size='medium' >
                         <form onSubmit={handleColumnFormSubmit}>
                             <h2 className='text-xl font-rowdies py-2'>Enter Column Names and Types</h2>
                             {columnDefinitions.map((colDef, index) => (

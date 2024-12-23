@@ -195,3 +195,38 @@ export const logout: RequestHandler = async (req, res) => {
   res.status(200).json({ success: true, message: "Logged out" });
 };
 
+export const updateProfile: RequestHandler = async (req: CustomRequest, res) => {
+  const { name } = req.body;
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found" });
+    }
+    user.name = name;
+    await user.save();
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    res.status(400).json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export const changePassword: RequestHandler = async (req: CustomRequest, res) => {
+  const { currentPassword, newPassword } = req.body;
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found" });
+    }
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Current password is incorrect" });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+    res.status(200).json({ success: true, message: "Password changed successfully" });
+  } catch (error) {
+    res.status(400).json({ success: false, message: "Something went wrong" });
+  }
+};
+

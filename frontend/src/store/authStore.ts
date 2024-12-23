@@ -19,6 +19,8 @@ interface AuthState {
     checkAuth: () => Promise<void>;
     forgotPassword: (email: string) => Promise<void>;  
     resetPassword: (password: string, token: string | undefined) => Promise<void>;  
+    updateProfile: (name: string) => Promise<void>;
+    changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
     logout: () => Promise<void>;
 }
 
@@ -107,6 +109,30 @@ export const useAuthStore = create<AuthState>((set) => ({
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 set({ error: error.response.data.message || "Error Resetting Password", isLoading: false });
+            }
+            throw error;
+        }
+    },
+    updateProfile: async (name: string) => {
+        set({ isLoading: true, error: null });
+        try {
+            const res = await axios.put(`${API_URL}/update-profile`, { name });
+            set({ user: res.data.user, isLoading: false });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                set({ error: error.response.data.message || "Error updating profile", isLoading: false });
+            }
+            throw error;
+        }
+    },
+    changePassword: async (currentPassword: string, newPassword: string) => {
+        set({ isLoading: true, error: null });
+        try {
+            const res = await axios.put(`${API_URL}/change-password`, { currentPassword, newPassword });
+            set({ message: res.data.message, isLoading: false });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                set({ error: error.response.data.message || "Error changing password", isLoading: false });
             }
             throw error;
         }

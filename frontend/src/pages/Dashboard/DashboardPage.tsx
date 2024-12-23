@@ -7,6 +7,7 @@ import Modal from '../../components/Modal';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/SideBar';
 import './custom.css'
+import ProfileModal from '../../components/ProfileModal';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -37,6 +38,16 @@ const DashboardPage = () => {
             setRowData(rows);
         }
     }, [fileData, fileHeaders]);
+
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+    const handleEditProfileClick = () => {
+        setIsProfileModalOpen(true);
+    };
+
+    const handleCloseProfileModal = () => {
+        setIsProfileModalOpen(false);
+    };
 
     const handleFileClick = async (fileId: string) => {
         await openFile(fileId);
@@ -120,9 +131,14 @@ const DashboardPage = () => {
                         strokeWidth={1.3}
                         size={80} />
                     <h1 className='text-2xl font-poppins text-center px-5'> {user.name} </h1>
-                    <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl  w-3/4 flex flex-row gap-2 justify-center'> Edit Profile
+                    <button
+                    onClick={handleEditProfileClick}
+                     className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl  w-3/4 flex flex-row gap-2 justify-center'
+                    > Edit Profile
                     </button>
+                    
                 </div>
+                <ProfileModal isOpen={isProfileModalOpen} onClose={handleCloseProfileModal} />
                 <div className='flex flex-col h-auto w-3/4 bg-white rounded-3xl shadow-lg m-5 p-5'>
                     <h1 className='text-3xl font-rowdies text-start px-5 mb-5'> Uploaded Files </h1>
                     {isFileLoading ? (
