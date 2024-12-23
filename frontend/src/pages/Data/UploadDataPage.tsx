@@ -20,7 +20,7 @@ import {
 } from 'react-datasheet-grid'
 import { useDataStore } from '../../store/dataStore';
 import toast from 'react-hot-toast';
-import Sidebar from '../../components/sideBar';
+import Sidebar from '../../components/SideBar';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -226,7 +226,13 @@ const UploadDataPage = () => {
         setIsColumnFormOpen(false);
     };
 
-    const closeModal = () => setIsModalOpen(false);
+    const closeModal = () => {
+        const userConfirmed = window.confirm("You have unsaved changes. Are you sure you want to close the modal?");
+        if (userConfirmed) {
+            setIsModalOpen(false);
+        }
+        
+    }
 
     const clearFile = () => {
         setFileName(null);
@@ -290,7 +296,9 @@ const UploadDataPage = () => {
                                     onChange={handleUpload}
                                     id="fileInput"
                                 />
+                                <p className='font-poppins text-xs text-red-500'>*You can't upload files with duplicate name, check your profile before you upload</p>
                             </div>
+                            
                         </div>
                     ) : (
                         <div className='flex flex-row bg-white p-4 w-3/4 min-w-fit rounded-2xl border-2 border-black py-10'>
@@ -310,7 +318,7 @@ const UploadDataPage = () => {
                                     Reopen File
                                 </button>
                                 <button
-                                    className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'
+                                    className='bg-red-500 font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'
                                     onClick={clearFile}
                                 >
                                     Clear

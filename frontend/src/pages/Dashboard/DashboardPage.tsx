@@ -5,7 +5,7 @@ import { useDataStore } from '../../store/dataStore';
 import { DataSheetGrid, Column, keyColumn, textColumn, intColumn, percentColumn, dateColumn } from 'react-datasheet-grid';
 import Modal from '../../components/Modal';
 import toast from 'react-hot-toast';
-import Sidebar from '../../components/sideBar';
+import Sidebar from '../../components/SideBar';
 import './custom.css'
 
 type RowData = { [key: string]: string | number | Date | null; };

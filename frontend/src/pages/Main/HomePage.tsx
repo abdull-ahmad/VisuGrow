@@ -23,8 +23,8 @@ const HomePage = () => {
 
   const components = [
     ["Area", Area],
-    ["Line", Line],
     ["Bar", Bar],
+    ["Line", Line],
   ]
 
   return (
@@ -109,8 +109,8 @@ const HomePage = () => {
       </div>
       <div className='flex flex-col justify-center items-center'>
         <h1 className='customColorFont font-rowdies text-5xl text-center p-10'>Interactive Graphs</h1>
-        <div className='flex flex-row justify-between items-center w-3/4'>
-          {components.map(([label, Comp]) => {
+        <div className='flex flex-row justify-between items-center w-5/6'>
+        {components.map(([label, Comp]) => {
             return (
               <div key={label + ""}  >
                 <div style={{ width: "400px", height: "300px" }}>
@@ -143,7 +143,7 @@ const HomePage = () => {
       </div>
       <div className='flex flex-col justify-center items-center mainCenter'>
         <h1 className='customColorFont font-rowdies text-5xl text-center py-5' > Our Vision </h1>
-        <p className='font-poppins text-lg text-center p-5 mb-5  bg-white w-1/2 rounded-2xl border border-gray-300'>
+        <p className='font-poppins text-lg text-center p-5 mb-10  bg-white w-1/2 rounded-2xl border border-gray-300'>
           VisuGrow is a free, user-friendly data visualization platform designed for small E-commerce entrepreneurs who face challenges with complex tools and tight budgets. It enables users to explore, understand, and leverage insights from their data for informed decisions and sustainable growth. Unlike costly, complex business intelligence tools, VisuGrow offers a seamless, no-code experience tailored to E-commerce needs, empowering entrepreneurs to become data-driven and maximize profitability.
         </p>
       </div>

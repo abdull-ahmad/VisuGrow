@@ -4,7 +4,7 @@ import { AxisOptions, Chart } from "react-charts";
 
 export default function Bar() {
   const { data } = useDemoConfig({
-    series: 3,
+    series: 2,
     dataType: "ordinal",
   });
 
@@ -30,9 +30,6 @@ export default function Bar() {
 
   return (
     <>
-      
-      <br />
-      <br />
         <Chart
           options={{
             data,
