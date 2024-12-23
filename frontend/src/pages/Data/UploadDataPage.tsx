@@ -20,6 +20,7 @@ import {
 } from 'react-datasheet-grid'
 import { useDataStore } from '../../store/dataStore';
 import toast from 'react-hot-toast';
+import Sidebar from '../../components/sideBar';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -40,18 +41,29 @@ const UploadDataPage = () => {
     const [replaceValue, setReplaceValue] = useState('');
     const [isSearchReplaceOpen, setIsSearchReplaceOpen] = useState(false);
     const { logout, isLoading, error } = useAuthStore();
-    const { saveFile } = useDataStore();
+    const { saveFile, fileerror } = useDataStore();
 
     const handleLogout = async () => { logout(); }
 
     const openModal = () => setIsModalOpen(true);
 
-    const determineColumnType = (values: (string | number | Date)[]): 'text' | 'number' | 'date' | 'percent' => {
+    // Helper function to determine column type
+    const getColumnType = (column: Column): 'text' | 'number' | 'percent' | 'date' => {
+        // Compare the column configuration with predefined columns
+        const columnStr = JSON.stringify(column);
+        if (columnStr.includes(JSON.stringify(intColumn))) return 'number';
+        if (columnStr.includes(JSON.stringify(percentColumn))) return 'percent';
+        if (columnStr.includes(JSON.stringify(dateColumn))) return 'date';
+        return 'text';
+    };
+
+    const determineColumnType = (values: (string | number | Date | null)[]): 'text' | 'number' | 'date' | 'percent' => {
         const dateRegex = /^(?:(0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])[\/\-](\d{4})|(\d{4})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])|([12][0-9]{3})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])|(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d+)?(Z|([+-])([01]\d|2[0-3]):([0-5]\d)))$/;
         const numberRegex = /^-?\d+(\.\d+)?$/; // Matches integers and floating-point numbers
         const percentRegex = /^-?\d+(\.\d+)?%$/; // Matches percentage values
 
         for (const value of values) {
+            if (value === null) continue;
             if (typeof value === 'number' || numberRegex.test(value.toString())) {
                 return 'number';
             } else if (percentRegex.test(value.toString())) {
@@ -63,56 +75,17 @@ const UploadDataPage = () => {
         return 'text';
     };
 
-    const createColumn = (name: string, type: 'text' | 'number' | 'percent' | 'date'): Column<RowData> => {
+    const createColumn = (name: string, type: 'text' | 'number' | 'percent' | 'date'): Column => {
         switch (type) {
             case 'number':
-                return { ...keyColumn<RowData, number>(name, intColumn), title: name };
+                return { ...keyColumn(name, intColumn), title: name };
             case 'percent':
-                return { ...keyColumn<RowData, number>(name, percentColumn), title: name };
+                return { ...keyColumn(name, percentColumn), title: name };
             case 'date':
-                return { ...keyColumn<RowData, Date>(name, dateColumn), title: name };
+                return { ...keyColumn(name, dateColumn), title: name };
             default:
-                return { ...keyColumn<RowData, string>(name, textColumn), title: name };
+                return { ...keyColumn(name, textColumn), title: name };
         }
-    };
-
-    const processData = (
-        headers: string[],
-        rows: Array<{ [key: string]: string | number | Date }>
-    ): { columns: Column<RowData>[]; rowData: RowData[] } => {
-        // Column Definitions
-        const columns: Column<RowData>[] = headers.map((header: string) => {
-            console.log('Column values for header:', header, rows.map(row => row[header]));
-            const columnType = determineColumnType(rows.map(row => row[header]));
-            return createColumn(header, columnType);
-        });
-
-        // Row Data Mapping
-        const rowDataMapped = rows.map((row: { [key: string]: string | number | Date }) => {
-            const mappedRowData: { [key: string]: string | number | Date | null } = {};
-            headers.forEach((header: string) => {
-                let cellValue = row[header];
-                if (typeof cellValue === 'string' && cellValue.endsWith('%')) {
-                    // Convert "10%" to 0.1
-                    cellValue = parseFloat(cellValue.slice(0, -1)) / 100;
-                } else if (
-                    typeof cellValue === 'string' &&
-                    !isNaN(Date.parse(cellValue)) &&
-                    isNaN(Number(cellValue))
-                ) {
-                    // Parse valid date strings and set time to noon to prevent timezone shifts
-                    cellValue = new Date(cellValue);
-                    cellValue.setHours(12); // Set to noon
-                } else if (typeof cellValue === 'string' && !isNaN(Number(cellValue))) {
-                    // Convert numeric strings to numbers
-                    cellValue = Number(cellValue);
-                }
-                mappedRowData[header] = cellValue !== undefined && cellValue !== '' ? cellValue : null;
-            });
-            return mappedRowData;
-        });
-
-        return { columns, rowData: rowDataMapped };
     };
 
     const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,30 +102,27 @@ const UploadDataPage = () => {
             if (!e || !e.target || !e.target.result) {
                 return;
             }
-            console.log(fileName);
-            console.log(fileExtension);
+
             if (fileExtension === 'xlsx' || fileExtension === 'xls') {
                 // Handle XLSX file
                 const data = new Uint8Array(e.target.result as ArrayBuffer);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData: (string | number | Date)[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
+                const jsonData: (string | number | Date | null)[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
 
                 const headers = jsonData[0] as string[];
                 const rowsArray = jsonData.slice(1);
 
                 // Convert rows from array to object
                 const rows = rowsArray.map(row => {
-                    const rowObject: { [key: string]: string | number | Date } = {};
+                    
+                    const rowObject: { [key: string]: string | number | Date | null } = {};
                     headers.forEach((header, index) => {
-                        rowObject[header] = row[index];
+                        rowObject[header] = row[index] !== undefined && row[index] !== '' ? row[index] : null;
                     });
                     return rowObject;
                 });
-
-                console.log('Headers:', headers);
-                console.log('Rows:', rows);
 
                 const { columns, rowData } = processData(headers, rows);
 
@@ -162,24 +132,27 @@ const UploadDataPage = () => {
                 setFileName(file.name);
                 setIsModalOpen(true); // Open the modal after setting the data
             } else if (fileExtension === 'csv') {
-                console.log('CSV file handler');
+
                 // Handle CSV file
                 Papa.parse(file, {
                     complete: (result) => {
-                        const jsonData = result.data as Array<{ [key: string]: string | number | Date }>;
+                        const jsonData = result.data as Array<{ [key: string]: string | number | Date | null }>;
 
                         if (jsonData.length === 0) {
-                            alert('The CSV file is empty.');
+                            toast.error('No data found in the file');
                             return;
                         }
                         // Use result.meta.fields to get headers
                         const headers = result.meta.fields as string[];
-                        const rows = jsonData;
-                        console.log('Headers:', headers);
-                        console.log('Rows:', rows);
-
+                        const rows = jsonData.map(row => {
+                            console.log(row);
+                            const rowObject: { [key: string]: string | number | Date | null } = {};
+                            headers.forEach((header) => {
+                                rowObject[header] = row[header] !== undefined && row[header] !== '' ? row[header] : null;
+                            });
+                            return rowObject;
+                        });
                         const { columns, rowData } = processData(headers, rows);
-
                         // Setting State
                         setColDefs(columns);
                         setRowData(rowData);
@@ -191,7 +164,7 @@ const UploadDataPage = () => {
                     dynamicTyping: true, // Automatically infer types
                 });
             } else {
-                alert('Unsupported file type');
+                toast.error('Unsupported file format');
             }
         };
 
@@ -202,10 +175,49 @@ const UploadDataPage = () => {
         }
     };
 
+    // Updated processData function to handle null values
+    const processData = (
+        headers: string[],
+        rows: Array<{ [key: string]: string | number | Date | null }>
+    ): { columns: Column[]; rowData: any } => {
+        // Column Definitions
+        const columns: Column[] = headers.map((header: string) => {
+            const columnType = determineColumnType(rows.map(row => row[header]));
+            return createColumn(header, columnType);
+        });
+
+        // Row Data Mapping
+        const rowDataMapped = rows.map((row: { [key: string]: string | number | Date | null }) => {
+            const mappedRowData: { [key: string]: string | number | Date | null } = {};
+            headers.forEach((header: string) => {
+                let cellValue = row[header];
+                if (typeof cellValue === 'string' && cellValue.endsWith('%')) {
+                    // Convert "10%" to 0.1
+                    cellValue = parseFloat(cellValue.slice(0, -1)) / 100;
+                } else if (
+                    typeof cellValue === 'string' &&
+                    !isNaN(Date.parse(cellValue)) &&
+                    isNaN(Number(cellValue))
+                ) {
+                    cellValue = new Date(cellValue);
+                    cellValue.setHours(12); // Set to noon
+                } else if (typeof cellValue === 'string' && !isNaN(Number(cellValue))) {
+                    // Convert numeric strings to numbers
+                    cellValue = Number(cellValue);
+                }
+                mappedRowData[header] = cellValue !== undefined && cellValue !== '' ? cellValue : null;
+            });
+            return mappedRowData;
+        });
+
+        return { columns, rowData: rowDataMapped };
+    };
+
+
     const handleColumnFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        const columns: Column<RowData>[] = columnDefinitions.map((colDef) => createColumn(colDef.name, colDef.type));
+        const columns: Column[] = columnDefinitions.map((colDef) => createColumn(colDef.name, colDef.type));
 
         setColDefs(columns);
         setRowData([]);
@@ -242,30 +254,29 @@ const UploadDataPage = () => {
 
     const handleFileSave = async () => {
         try {
-            const columnNames = colDefs.map(col => col.title);
-            await saveFile({ rows: rowData, columns: columnNames, fileName: fileName || 'data' });
+            
+            const columnInfo = colDefs.map(col => ({
+                title: col.title,
+                type: getColumnType(col)
+            }));
+    
+            await saveFile({ 
+                rows: rowData, 
+                columns: columnInfo, 
+                fileName: fileName || 'data'
+            });
+            
             toast.success('File saved successfully!');
         } catch (error) {
             console.error('Error saving file:', error);
-            alert('Failed to save file.');
         }
     };
 
     return (
         <div className='flex flex-row min-h-screen '>
-            <div className='flex flex-col sidebar min-w-fit justify-between'>
-                <a href="/" className='flex flex-row items-start mr-5'>
-                    <img src="/Logo.png" alt="logo"/>
-                    
-                </a>
-                {error && <p className='text-red-500 text-sm font-poppins'>{error}</p>}
-                <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl  w-3/4 flex flex-row gap-2' onClick={handleLogout}> {
-                    isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : <LogOut />
-                } <span> Sign Out</span> </button>
-            </div>
-
+            <Sidebar isLoading={isLoading} error={error} handleLogout={handleLogout} />
             <div className='flex flex-col min-h-screen w-full mainCenter'>
-                <h1 className='text-3xl font-rowdies text-center py-8'> Upload Data </h1>
+                <h1 className='text-5xl font-rowdies text-center py-8'> Upload Data </h1>
                 <div className='flex flex-row justify-center items-center'>
                     {!fileName ? (
                         <div className='flex flex-row bg-white p-4 w-3/4 min-w-fit rounded-2xl border-2 border-black py-10'>
@@ -308,12 +319,14 @@ const UploadDataPage = () => {
                         </div>
                     )}
                 </div>
+        
                 <Modal isOpen={isModalOpen} onClose={closeModal} onSearchReplace={handleSearchReplace} onSave={handleFileSave}>
                     <DataSheetGrid
                         value={rowData}
                         onChange={setRowData}
                         columns={colDefs}
                     />
+                    {fileerror && <p className='text-red-500 text-sm font-poppins'>{fileerror}</p>}
                 </Modal>
                 {isSearchReplaceOpen && (
                     <Modal isOpen={isSearchReplaceOpen} onClose={() => setIsSearchReplaceOpen(false)} showSaveButton={false} showSearchReplaceButton={false} size="small">
@@ -451,7 +464,8 @@ const UploadDataPage = () => {
                             </div>
                         </div>
                         <div className='flex flex-col w-1/4 justify-center items-center'>
-                            <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'> Integerate </button>
+                            <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4' 
+                            onClick={() => toast.error('Coming Soon!')}> Integerate </button>
                         </div>
                     </div>
                 </div>

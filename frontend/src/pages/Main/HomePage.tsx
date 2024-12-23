@@ -10,7 +10,7 @@ const HomePage = () => {
 
   const navigate = useNavigate();
 
-  const {  isVerified ,isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
 
     const handleLogout = async () => {
         try {
@@ -30,14 +30,16 @@ const HomePage = () => {
   return (
     <div>
       <div className='header flex flex-row w-full justify-between'>
-        <img src="/Logo.png" alt="logo" width={200} />
+        <a href="/">
+          <img src="/Logo.png" alt="logo" width={200} />
+        </a>
         <div className='flex flex-row justify-end items-center w-1/5'>
                 {isAuthenticated ? (
                     <button 
                         className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-2/3 h-1/2 gap-2'
                         onClick={handleLogout}
                     >
-                        Logout
+                        Sign out
                     </button>
                 ) : (
                     <>

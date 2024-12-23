@@ -6,10 +6,13 @@ const schema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    headers: {
-        type: [String],
-        required: true,
-    },
+    headers: [{
+        title: String,
+        type: {
+            type: String,
+            enum: ['text', 'number', 'percent', 'date']
+        }
+    }],
     fileData: {
         type: mongoose.Schema.Types.Mixed,
         required: true,
