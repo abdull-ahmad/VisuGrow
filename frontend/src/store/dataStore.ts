@@ -12,9 +12,9 @@ interface DataStore {
     fileerror: string | null;
     isFileLoading: boolean;
     saveFile: (data: { rows: any; columns: any; fileName: string }) => Promise<void>;
-    editFile: (data: { rows: any; columns: any; fileName: string }) => Promise<void>;
-    openFile: (fileName: string) => Promise<void>;
-    deleteFile: (fileName: string) => Promise<void>;
+    editFile: (data: { rows: any; columns: any; fileId: string }) => Promise<void>;
+    openFile: (fileId: string) => Promise<void>;
+    deleteFile: (fileId: string) => Promise<void>;
     viewFile: () => Promise<void>;
 };
 
@@ -93,9 +93,9 @@ export const useDataStore = create<DataStore>((set) => ({
     },
     editFile: async (data) => {
         set({ isFileLoading: true, fileerror: null });
-        console.log(data.fileName);
+        console.log(data.fileId);
         try {
-            await axios.put(`${API_URL}/edit/${data.fileName}`, data , {
+            await axios.put(`${API_URL}/edit/${data.fileId}`, data , {
                 headers: {
                     'Content-Type': 'application/json',
                 }

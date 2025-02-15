@@ -1,5 +1,5 @@
 import './custom.css'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Modal from '../../components/Modal';
 import SheetIcon from '../../Icons/SheetIcon'
 import StoreIcon from '../../Icons/StoreIcon'
@@ -21,6 +21,8 @@ import {
 import { useDataStore } from '../../store/dataStore';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/SideBar';
+import { useNavigate } from 'react-router-dom';
+import {isValid , parse } from 'date-fns';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -42,10 +44,13 @@ const UploadDataPage = () => {
     const [isSearchReplaceOpen, setIsSearchReplaceOpen] = useState(false);
     const { logout, isLoading, error } = useAuthStore();
     const { saveFile, fileerror } = useDataStore();
+    const [nullCount, setNullCount] = useState(0);
+    const navigate = useNavigate();
 
     const handleLogout = async () => { logout(); }
 
     const openModal = () => setIsModalOpen(true);
+
 
     // Helper function to determine column type
     const getColumnType = (column: Column): 'text' | 'number' | 'percent' | 'date' => {
@@ -58,20 +63,51 @@ const UploadDataPage = () => {
     };
 
     const determineColumnType = (values: (string | number | Date | null)[]): 'text' | 'number' | 'date' | 'percent' => {
-        const dateRegex = /^(?:(0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])[\/\-](\d{4})|(\d{4})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])|([12][0-9]{3})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12][0-9]|3[01])|(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(\.\d+)?(Z|([+-])([01]\d|2[0-3]):([0-5]\d)))$/;
-        const numberRegex = /^-?\d+(\.\d+)?$/; // Matches integers and floating-point numbers
-        const percentRegex = /^-?\d+(\.\d+)?%$/; // Matches percentage values
-
         for (const value of values) {
             if (value === null) continue;
-            if (typeof value === 'number' || numberRegex.test(value.toString())) {
+    
+            // Check if the value is already a number
+            if (typeof value === 'number') {
                 return 'number';
-            } else if (percentRegex.test(value.toString())) {
-                return 'percent';
-            } else if (dateRegex.test(value.toString())) {
-                return 'date';
+            }
+            // Check if the value is a string that can be converted to a number
+            if (typeof value === 'string') {
+                // Trim whitespace from the string
+                const trimmedValue = value.trim();
+    
+                // Check if the value is a percentage
+                if (trimmedValue.endsWith('%')) {
+                    const numericValue = trimmedValue.slice(0, -1); // Remove the '%' sign
+                    if (!isNaN(Number(numericValue))) {
+                        return 'percent';
+                    }
+                }
+    
+                // Check if the value is a number
+                if (!isNaN(Number(trimmedValue))) {
+                    return 'number';
+                }
+    
+                // Check if the value is a date
+                const dateFormats = [
+                    'yyyy-MM-dd', // ISO format
+                    'MM/dd/yyyy', // US format
+                    'dd/MM/yyyy', // European format
+                    'yyyy/MM/dd', // Another common format
+                    'yyyy-MM-dd\'T\'HH:mm:ss', // ISO datetime format
+                    'yyyy-MM-dd\'T\'HH:mm:ss.SSS', // ISO datetime with milliseconds
+                ];
+    
+                for (const format of dateFormats) {
+                    const parsedDate = parse(trimmedValue, format, new Date());
+                    if (isValid(parsedDate)) {
+                        return 'date';
+                    }
+                }
             }
         }
+    
+        // Default to text if no other type is detected
         return 'text';
     };
 
@@ -89,85 +125,69 @@ const UploadDataPage = () => {
     };
 
     const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!event || !event.target || !event.target.files || event.target.files.length === 0) {
-            return;
-        }
+        if (!event?.target?.files?.length) return;
+    
         const file = event.target.files[0];
         const reader = new FileReader();
-
-        const fileName = file.name.toLowerCase();
-        const fileExtension = fileName.split('.').pop();
-
-        reader.onload = (e) => {
-            if (!e || !e.target || !e.target.result) {
-                return;
-            }
-
-            if (fileExtension === 'xlsx' || fileExtension === 'xls') {
-                // Handle XLSX file
-                const data = new Uint8Array(e.target.result as ArrayBuffer);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData: (string | number | Date | null)[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
-
-                const headers = jsonData[0] as string[];
-                const rowsArray = jsonData.slice(1);
-
-                // Convert rows from array to object
-                const rows = rowsArray.map(row => {
-                    
-                    const rowObject: { [key: string]: string | number | Date | null } = {};
-                    headers.forEach((header, index) => {
-                        rowObject[header] = row[index] !== undefined && row[index] !== '' ? row[index] : null;
-                    });
-                    return rowObject;
-                });
-
-                const { columns, rowData } = processData(headers, rows);
-
-                // Setting State
-                setColDefs(columns);
-                setRowData(rowData);
-                setFileName(file.name);
-                setIsModalOpen(true); // Open the modal after setting the data
-            } else if (fileExtension === 'csv') {
-
-                // Handle CSV file
-                Papa.parse(file, {
-                    complete: (result) => {
-                        const jsonData = result.data as Array<{ [key: string]: string | number | Date | null }>;
-
-                        if (jsonData.length === 0) {
-                            toast.error('No data found in the file');
-                            return;
-                        }
-                        // Use result.meta.fields to get headers
-                        const headers = result.meta.fields as string[];
-                        const rows = jsonData.map(row => {
+        const fileExtension = file.name.split('.').pop()?.toLowerCase();
     
-                            const rowObject: { [key: string]: string | number | Date | null } = {};
-                            headers.forEach((header) => {
-                                rowObject[header] = row[header] !== undefined && row[header] !== '' ? row[header] : null;
-                            });
-                            return rowObject;
+        reader.onload = (e) => {
+            if (!e?.target?.result) return;
+    
+            try {
+                if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+                    const data = new Uint8Array(e.target.result as ArrayBuffer);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData: (string | number | Date | null)[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
+    
+                    const headers = jsonData[0] as string[];
+                    const rows = jsonData.slice(1).map(row => {
+                        const rowObject: { [key: string]: string | number | Date | null } = {};
+                        headers.forEach((header, index) => {
+                            rowObject[header] = row[index] ?? null;
                         });
-                        const { columns, rowData } = processData(headers, rows);
-                        // Setting State
-                        setColDefs(columns);
-                        setRowData(rowData);
-                        setFileName(file.name);
-                        setIsModalOpen(true); // Open the modal after setting the data
-                    },
-                    header: true,
-                    skipEmptyLines: true,
-                    dynamicTyping: true, // Automatically infer types
-                });
-            } else {
-                toast.error('Unsupported file format');
+                        return rowObject;
+                    });
+    
+                    const { columns, rowData } = processData(headers, rows);
+                    setColDefs(columns);
+                    setRowData(rowData);
+                    setFileName(file.name);
+                    setIsModalOpen(true);
+                } else if (fileExtension === 'csv') {
+                    Papa.parse(file, {
+                        complete: (result) => {
+                            const jsonData = result.data as Array<{ [key: string]: string | number | Date | null }>;
+                            const headers = result.meta.fields as string[];
+                            const rows = jsonData.map(row => {
+                                const rowObject: { [key: string]: string | number | Date | null } = {};
+                                headers.forEach(header => {
+                                    rowObject[header] = row[header] ?? null;
+                                });
+                                return rowObject;
+                            });
+    
+                            const { columns, rowData } = processData(headers, rows);
+                            setColDefs(columns);
+                            setRowData(rowData);
+                            setFileName(file.name);
+                            setIsModalOpen(true);
+                        },
+                        header: true,
+                        skipEmptyLines: true,
+                        dynamicTyping: true,
+                    });
+                } else {
+                    toast.error('Unsupported file format');
+                }
+            } catch (error) {
+                toast.error('Error processing file');
+                console.error(error);
             }
         };
-
+    
         if (fileExtension === 'csv') {
             reader.readAsText(file);
         } else {
@@ -185,30 +205,50 @@ const UploadDataPage = () => {
             const columnType = determineColumnType(rows.map(row => row[header]));
             return createColumn(header, columnType);
         });
-
+    
         // Row Data Mapping
         const rowDataMapped = rows.map((row: { [key: string]: string | number | Date | null }) => {
             const mappedRowData: { [key: string]: string | number | Date | null } = {};
             headers.forEach((header: string) => {
                 let cellValue = row[header];
-                if (typeof cellValue === 'string' && cellValue.endsWith('%')) {
-                    cellValue = parseFloat(cellValue.slice(0, -1)) / 100;
-                } else if (
-                    typeof cellValue === 'string' &&
-                    !isNaN(Date.parse(cellValue)) &&
-                    isNaN(Number(cellValue))
-                ) {
-                    cellValue = new Date(cellValue);
-                    cellValue.setHours(12); // Set to noon
-                } else if (typeof cellValue === 'string' && !isNaN(Number(cellValue))) {
-                    // Convert numeric strings to numbers
-                    cellValue = Number(cellValue);
+                if (typeof cellValue === 'string') {
+                    const trimmedValue = cellValue.trim();
+    
+                    // Handle percentage values
+                    if (trimmedValue.endsWith('%')) {
+                        const numericValue = trimmedValue.slice(0, -1);
+                        if (!isNaN(Number(numericValue))) {
+                            cellValue = parseFloat(numericValue) / 100;
+                        }
+                    }
+                    // Handle numeric values
+                    else if (!isNaN(Number(trimmedValue))) {
+                        cellValue = Number(trimmedValue);
+                    }
+                    // Handle date values
+                    else {
+                        const dateFormats = [
+                            'yyyy-MM-dd', // ISO format
+                            'MM/dd/yyyy', // US format
+                            'dd/MM/yyyy', // European format
+                            'yyyy/MM/dd', // Another common format
+                            'yyyy-MM-dd\'T\'HH:mm:ss', // ISO datetime format
+                            'yyyy-MM-dd\'T\'HH:mm:ss.SSS', // ISO datetime with milliseconds
+                        ];
+                        for (const format of dateFormats) {
+                            const parsedDate = parse(trimmedValue, format, new Date());
+                            if (isValid(parsedDate)) {
+                                cellValue = parsedDate;
+                                break;
+                            }
+                        }
+                    }
                 }
                 mappedRowData[header] = cellValue !== undefined && cellValue !== '' ? cellValue : null;
             });
             return mappedRowData;
         });
-
+    
         return { columns, rowData: rowDataMapped };
     };
 
@@ -230,7 +270,6 @@ const UploadDataPage = () => {
         if (userConfirmed) {
             setIsModalOpen(false);
         }
-        
     }
 
     const clearFile = () => {
@@ -268,15 +307,35 @@ const UploadDataPage = () => {
             await saveFile({ 
                 rows: rowData, 
                 columns: columnInfo, 
-                fileName: fileName || 'data'
+                fileName: fileName || 'default_filename'
             });
             
             toast.success('File saved successfully!');
+
+            setTimeout(() => {
+                navigate(0);
+            }, 2000);
+            
         } catch (error) {
             console.error('Error saving file:', error);
         }
     };
 
+    const countNullValues = (data: RowData[]) => {
+        let count = 0;
+        data.forEach(row => {
+            Object.values(row).forEach(value => {
+                if (value === null) {
+                    count++;
+                }
+            });
+        });
+        return count;
+    };
+
+    useEffect(() => {
+        setNullCount(countNullValues(rowData));
+    }, [rowData]);
     return (
         <div className='flex flex-row min-h-screen '>
             <Sidebar isLoading={isLoading} error={error} handleLogout={handleLogout} />
@@ -295,7 +354,6 @@ const UploadDataPage = () => {
                                     onChange={handleUpload}
                                     id="fileInput"
                                 />
-                                <p className='font-poppins text-xs text-red-500'>*You can't upload files with duplicate name, check your profile before you upload</p>
                             </div>
                             
                         </div>
@@ -333,6 +391,7 @@ const UploadDataPage = () => {
                         onChange={setRowData}
                         columns={colDefs}
                     />
+                    <p className='text-red-500 text-sm font-poppins'>Number of null values: {nullCount}</p>
                     {fileerror && <p className='text-red-500 text-sm font-poppins'>{fileerror}</p>}
                 </Modal>
                 {isSearchReplaceOpen && (

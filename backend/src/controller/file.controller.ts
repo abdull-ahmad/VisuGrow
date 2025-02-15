@@ -9,17 +9,13 @@ export const uploadFile: RequestHandler = async (req: CustomRequest, res) => {
   try {
     const userId = req.userId;
     const { rows, columns, fileName } = req.body;
-    const existingFile = await File.findOne({ name: fileName, user: userId });
-    if (existingFile) {
-      return res.status(400).json({ message: 'File already exists' });
-    }
+    
     const file = new File({
       name: fileName,
       user: userId,
       headers: columns, 
       fileData: rows,
   });
-  
     await file.save();
 
     res.status(200).json({ message: 'File uploaded successfully' });
@@ -79,10 +75,10 @@ export const deleteFile: RequestHandler = async (req: CustomRequest, res) => {
 export const  editFile: RequestHandler = async (req: CustomRequest, res) => {
   try {
     const userId = req.userId;
-    const fileName = req.params.fileName;
+    const fileId = req.params.fileId;
     const { rows } = req.body;
 
-    const file = await File.findOne({ name: fileName, user: userId });
+    const file = await File.findOne({ _id: fileId, user: userId });
     if (!file) {
       return res.status(404).json({ message: 'File not found' });
     }

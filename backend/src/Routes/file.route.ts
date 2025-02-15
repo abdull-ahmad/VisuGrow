@@ -8,7 +8,7 @@ const fileRouter = Router();
 fileRouter.get('/view', verifyToken, viewFiles )   
 fileRouter.get('/open/:fileId', verifyToken, openFile );
 fileRouter.post('/upload', verifyToken, uploadFile );
-fileRouter.put('/edit/:fileName', verifyToken, editFile );
+fileRouter.put('/edit/:fileId', verifyToken, editFile );
 fileRouter.delete('/delete/:fileId', verifyToken, deleteFile );
 
 

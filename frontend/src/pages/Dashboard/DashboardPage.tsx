@@ -20,11 +20,15 @@ interface Header {
 
 const DashboardPage = () => {
     const { logout, isLoading, error, user } = useAuthStore();
-    const { files, viewFile, deleteFile, openFile, editFile, fileName, isFileLoading, fileerror, fileData, fileHeaders } = useDataStore();
-
+    const { files, viewFile, deleteFile, openFile, editFile,isFileLoading, fileerror, fileData, fileHeaders } = useDataStore();
+    const [fileId, setFileId] = useState<string | null>(null);
+    const [searchValue, setSearchValue] = useState('');
+    const [replaceValue, setReplaceValue] = useState('');
+    const [isSearchReplaceOpen, setIsSearchReplaceOpen] = useState(false);
     const [rowData, setRowData] = useState<RowData[]>([]);
     const [colDefs, setColDefs] = useState<Column<RowData>[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [nullCount, setNullCount] = useState(0);
 
     useEffect(() => {
         viewFile();
@@ -50,13 +54,32 @@ const DashboardPage = () => {
     };
 
     const handleFileClick = async (fileId: string) => {
+        setFileId(fileId);
         await openFile(fileId);
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (fileName: string) => {
-        await deleteFile(fileName);
+    const handleDelete = async (fileId: string) => {
+        await deleteFile(fileId);
         viewFile();
+    };
+
+    const handleSearchReplace = () => {
+        setIsSearchReplaceOpen(true);
+    };
+
+    const handleSearchReplaceSubmit = () => {
+        const updatedRowData = rowData.map(row => {
+            const updatedRow = { ...row };
+            Object.keys(updatedRow).forEach(key => {
+                if (updatedRow[key] === searchValue) {
+                    updatedRow[key] = replaceValue;
+                }
+            });
+            return updatedRow;
+        });
+        setRowData(updatedRowData);
+        setIsSearchReplaceOpen(false);
     };
 
     const getColumnType = (column: Column): 'text' | 'number' | 'percent' | 'date' => {
@@ -77,7 +100,7 @@ const DashboardPage = () => {
             await editFile({
                 rows: rowData,
                 columns: columnInfo,
-                fileName: fileName || 'default_filename'
+                fileId: fileId || ''
             });
 
             toast.success('File saved successfully!');
@@ -120,6 +143,22 @@ const DashboardPage = () => {
         });
     };
 
+    const countNullValues = (data: RowData[]) => {
+            let count = 0;
+            data.forEach(row => {
+                Object.values(row).forEach(value => {
+                    if (value === null) {
+                        count++;
+                    }
+                });
+            });
+            return count;
+        };
+    
+        useEffect(() => {
+            setNullCount(countNullValues(rowData));
+        }, [rowData]);
+    
     return (
         <div className='flex flex-row min-h-screen '>
             <Sidebar isLoading={isLoading} error={error} handleLogout={handleLogout} />
@@ -158,7 +197,7 @@ const DashboardPage = () => {
                             ))}
                         </ul>
                     )}
-                    <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleFileSave}>
+                    <Modal isOpen={isModalOpen} onSearchReplace={handleSearchReplace} onClose={() => setIsModalOpen(false)} onSave={handleFileSave}>
                         {fileData && fileHeaders && (
                             <DataSheetGrid
                                 value={rowData}
@@ -166,9 +205,50 @@ const DashboardPage = () => {
                                 columns={colDefs}
                             />
                         )}
+                        <p className='text-red-500 text-sm font-poppins'>Number of null values: {nullCount}</p>
                     </Modal>
                 </div>
-
+                {isSearchReplaceOpen && (
+                <Modal isOpen={isSearchReplaceOpen} onClose={() => setIsSearchReplaceOpen(false)} showSaveButton={false} showSearchReplaceButton={false} size="small">
+                    <form onSubmit={(e) => { e.preventDefault(); handleSearchReplaceSubmit(); }}>
+                        <h2 className='text-xl font-rowdies py-2'>Search and Replace</h2>
+                        <div className='mb-4'>
+                            <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='searchValue'>
+                                Search Value
+                            </label>
+                            <input
+                                id='searchValue'
+                                type='text'
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                                required
+                            />
+                        </div>
+                        <div className='mb-4'>
+                            <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='replaceValue'>
+                                Replace Value
+                            </label>
+                            <input
+                                id='replaceValue'
+                                type='text'
+                                value={replaceValue}
+                                onChange={(e) => setReplaceValue(e.target.value)}
+                                className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                                required
+                            />
+                        </div>
+                        <div className='flex justify-end'>
+                            <button
+                                type='submit'
+                                className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl'
+                            >
+                                Replace
+                            </button>
+                        </div>
+                    </form>
+                </Modal>
+            )}
                 <div className='flex flex-row'>
                     <div className='flex flex-col justify-center items-center  w-1/6 bg-white rounded-3xl shadow-lg m-5 p-5'>
                         <Store
