@@ -47,11 +47,31 @@ export const viewFiles: RequestHandler = async (req: CustomRequest, res) => {
   try {
     const userId = req.userId;
     const files = await File.find({ user: userId });
-    res.status(200).json({ files });
+    res.status(200).json({ files: files.map((file) => ({ id: file._id, name: file.name })) });
   } catch (error) {
     console.error('Error viewing files:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
+}
+
+export const fileFields: RequestHandler = async (req: CustomRequest, res) => {
+    try {
+        const file = await File.findOne({
+            _id: req.params.fileId,
+            user: req.userId
+        }).select('headers');
+        
+        if (!file) return res.status(404).json({ message: 'File not found' });
+        
+        res.json({
+            fields: file.headers.map(h => ({
+                name: h.title,
+                type: h.type
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
 }
 
 export const deleteFile: RequestHandler = async (req: CustomRequest, res) => {

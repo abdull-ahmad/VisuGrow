@@ -1,22 +1,9 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import { DataStore } from '../types/file';
 
 const API_URL = 'http://localhost:5000/api/file';
 
-interface DataStore {
-    fileName: string;
-    fileData : any;
-    fileHeaders: any;
-    files: any[];
-    message: string | null;
-    fileerror: string | null;
-    isFileLoading: boolean;
-    saveFile: (data: { rows: any; columns: any; fileName: string }) => Promise<void>;
-    editFile: (data: { rows: any; columns: any; fileId: string }) => Promise<void>;
-    openFile: (fileId: string) => Promise<void>;
-    deleteFile: (fileId: string) => Promise<void>;
-    viewFile: () => Promise<void>;
-};
 
 export const useDataStore = create<DataStore>((set) => ({
     files: [],

@@ -1,5 +1,3 @@
-import React from 'react'
-
 const UploadIcon = () => {
     return (
         <svg width="91" height="109" viewBox="0 0 91 109" fill="none" xmlns="http://www.w3.org/2000/svg" href="http://www.w3.org/1999/xlink">

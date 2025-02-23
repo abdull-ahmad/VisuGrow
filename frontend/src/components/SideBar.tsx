@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isLoading, error, handleLogout }) => 
                 <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4 flex flex-row gap-2 justify-center mb-5' onClick={() => navigate('/upload')}> {
                     isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : <File />
                 } <span> Data</span> </button>
-                <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4 flex flex-row gap-2 justify-center mb-5' onClick={() => toast.error('Coming Soon!')}> {
+                <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4 flex flex-row gap-2 justify-center mb-5' onClick={() => navigate('/visualization')}> {
                     isLoading ? <Loader className='animate-spin mx-auto' size={24} /> : <ChartSpline />
                 } <span> Visualization </span> </button>
             </div>

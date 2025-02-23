@@ -9,6 +9,7 @@ import UploadDataPage from "./pages/Data/UploadDataPage"
 import HomePage from "./pages/Main/HomePage"
 import LoadingSpinner from "./components/LoadingSpinner"
 import DashboardPage from "./pages/Dashboard/DashboardPage"
+import VisualizationPage from "./pages/Visualization/VisualizationPage"
 import { useAuthStore } from "./store/authStore"
 import { useEffect } from "react"
 
@@ -88,6 +89,12 @@ function App() {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/visualization" element={
+          <ProtectedRoute>
+            <VisualizationPage />
           </ProtectedRoute>
         } />
       </Routes>

@@ -1,28 +1,10 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import { AuthState } from '../types/auth';
 
 const API_URL = 'http://localhost:5000/api/auth';
 
 axios.defaults.withCredentials = true;
-
-interface AuthState {
-    user: any;
-    isAuthenticated: boolean;
-    isVerified: boolean;    
-    message: string | null;
-    error: string | null;
-    isLoading: boolean;
-    isCheckingAuth: boolean;
-    signup: (email: string, password: string, name: string) => Promise<void>;
-    verifyEmail: (code: string) => Promise<void>;
-    login: (email: string, password: string) => Promise<void>;
-    checkAuth: () => Promise<void>;
-    forgotPassword: (email: string) => Promise<void>;  
-    resetPassword: (password: string, token: string | undefined) => Promise<void>;  
-    updateProfile: (name: string) => Promise<void>;
-    changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
-    logout: () => Promise<void>;
-}
 
 export const useAuthStore = create<AuthState>((set) => ({
     user: null,

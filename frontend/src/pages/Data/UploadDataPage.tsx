@@ -38,7 +38,6 @@ const UploadDataPage = () => {
     const [columnDefinitions, setColumnDefinitions] = useState<ColumnDefinition[]>([]);
     const [isColumnFormOpen, setIsColumnFormOpen] = useState(false);
     const [fileName, setFileName] = useState<string | null>(null);
-    const [isSheetCreated, setIsSheetCreated] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [replaceValue, setReplaceValue] = useState('');
     const [isSearchReplaceOpen, setIsSearchReplaceOpen] = useState(false);
@@ -261,7 +260,7 @@ const UploadDataPage = () => {
         setColDefs(columns);
         setRowData([]);
         setIsModalOpen(true);
-        setIsSheetCreated(true);
+
         setIsColumnFormOpen(false);
     };
 
