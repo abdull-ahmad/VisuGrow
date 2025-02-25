@@ -9,6 +9,7 @@ export interface DataStore {
     saveFile: (data: { rows: any; columns: any; fileName: string }) => Promise<void>;
     editFile: (data: { rows: any; columns: any; fileId: string }) => Promise<void>;
     openFile: (fileId: string) => Promise<void>;
+    fileFields: (fileId: string) => Promise<void>;
     deleteFile: (fileId: string) => Promise<void>;
     viewFile: () => Promise<void>;
 };

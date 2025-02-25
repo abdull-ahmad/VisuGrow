@@ -1,43 +1,46 @@
-import useDemoConfig from "../../useDemoConfig";
-import React from "react";
-import { AxisOptions, Chart } from "react-charts";
+import React from 'react';
+import { Chart, AxisOptions } from 'react-charts';
+import ResizableBox from '../../utils/ResizableBox';
 
-export default function Bar() {
-  const { data } = useDemoConfig({
-    series: 2,
-    dataType: "ordinal",
-  });
+interface BarProps {
+  chartData: {
+    label: string;
+    data: { primary: any; secondary: any }[];
+  }[];
+  xLabel: string;
+  yLabel: string;
+}
 
-  const primaryAxis = React.useMemo<
-    AxisOptions<typeof data[number]["data"][number]>
-  >(
+export default function Bar({ chartData, xLabel, yLabel }: BarProps) {
+  const primaryAxis = React.useMemo<AxisOptions<any>>(
     () => ({
       getValue: (datum) => datum.primary,
     }),
     []
   );
 
-  const secondaryAxes = React.useMemo<
-    AxisOptions<typeof data[number]["data"][number]>[]
-  >(
+  const secondaryAxes = React.useMemo<AxisOptions<any>[]>(
     () => [
       {
         getValue: (datum) => datum.secondary,
+        scaleType: 'linear',
       },
     ],
     []
+
   );
 
   return (
     <>
-        <Chart
-          options={{
-            data,
-            primaryAxis,
-            secondaryAxes,
-          }}
-        />
-      
+    <ResizableBox>
+      <Chart
+        options={{
+          data: chartData,
+          primaryAxis,
+          secondaryAxes,
+        }}
+      />
+    </ResizableBox>
     </>
   );
 }

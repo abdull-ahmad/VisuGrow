@@ -29,7 +29,7 @@ export const useDataStore = create<DataStore>((set) => ({
             throw error;
         }
     },
-     viewFile: async () => {
+    viewFile: async () => {
         set({ isFileLoading: true, fileerror: null });
         try {
             const response = await axios.get(`${API_URL}/view`, {
@@ -38,6 +38,7 @@ export const useDataStore = create<DataStore>((set) => ({
                 }
             });
             set({ files: response.data.files, isFileLoading: false });
+            console.log(response.data.files);
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 set({ fileerror: error.response.data.message || "Error Viewing Files", isFileLoading: false });
@@ -57,6 +58,23 @@ export const useDataStore = create<DataStore>((set) => ({
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 set({ fileerror: error.response.data.message || "Error Deleting File", isFileLoading: false });
+            }
+            throw error;
+        }
+    },
+    fileFields: async (fileId: string) => {
+        set({ isFileLoading: true, fileerror: null });
+        try {
+            const response = await axios.get(`${API_URL}/fields/${fileId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            set({ fileHeaders: response.data.fields, isFileLoading: false });
+            set({ fileData: response.data.fileData, isFileLoading: false });
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                set({ fileerror: error.response.data.message || "Error Fetching File Fields", isFileLoading: false });
             }
             throw error;
         }
