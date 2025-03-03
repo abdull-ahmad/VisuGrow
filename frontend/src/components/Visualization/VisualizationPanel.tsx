@@ -1,20 +1,11 @@
 import React, { useState } from 'react';
 import { useDataStore } from '../../store/dataStore';
-import { ChartConfig } from '../../pages/Visualization/VisualizationPage';
-
-
-interface VisualizationPanelProps {
-  charts: ChartConfig[];
-  addChart: (chart: ChartConfig) => void;
-  updateChart: (id: string, updatedChart: Partial<ChartConfig>) => void;
-  removeChart: (id: string) => void;
-}
+import { ChartConfig, VisualizationPanelProps } from '../../types/Chart';
 
 export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
   charts,
   addChart,
   updateChart,
-  removeChart,
 }) => {
   const { fileHeaders } = useDataStore();
   const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
@@ -142,12 +133,6 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
                 </select>
               </div>
 
-              <button
-                onClick={() => removeChart(selectedChart.id)}
-                className="w-full py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                Remove Chart
-              </button>
             </>
           )}
         </div>

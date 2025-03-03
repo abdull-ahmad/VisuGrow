@@ -1,7 +1,7 @@
 import './custom.css';
-import Area from '../../components/Charts/Area'
-import Line from '../../components/Charts/Line'
-import Bar from '../../components/Charts/Bar'
+import Area from '../../components/HomePageCharts/Area'
+import Line from '../../components/HomePageCharts/Line'
+import Bar from '../../components/HomePageCharts/Bar'
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 

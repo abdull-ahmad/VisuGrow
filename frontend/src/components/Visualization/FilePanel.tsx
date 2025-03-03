@@ -1,4 +1,3 @@
-//// filepath: /d:/Visugrow/VisuGrow/frontend/src/components/Visualization/FilePanel.tsx
 import React, { useEffect, useState } from 'react';
 import { useDataStore } from '../../store/dataStore';
 

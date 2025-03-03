@@ -1,0 +1,14 @@
+/* Grid lines background */
+.react-grid-layout {
+    background-image: linear-gradient(to right, #f0f0f0 1px, transparent 1px),
+        linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+    background-size: 30px 30px;
+    /* Adjust grid spacing */
+}
+
+/* Chart container styling */
+.chart-container {
+    background: white;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

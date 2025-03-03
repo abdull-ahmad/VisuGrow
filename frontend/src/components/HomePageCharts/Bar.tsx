@@ -1,16 +1,14 @@
 import React from 'react';
 import { Chart, AxisOptions } from 'react-charts';
+import useDemoConfig from "../../useDemoConfig";
 
-interface BarProps {
-  chartData: {
-    label: string;
-    data: { primary: any; secondary: any }[];
-  }[];
-  xLabel: string;
-  yLabel: string;
-}
+export default function Bar() {
 
-export default function Bar({ chartData }: BarProps) {
+  const { data } = useDemoConfig({
+          series: 2,
+          dataType: "ordinal",
+      });
+  
   const primaryAxis = React.useMemo<AxisOptions<any>>(
     () => ({
       getValue: (datum) => datum.primary,
@@ -33,10 +31,9 @@ export default function Bar({ chartData }: BarProps) {
     <>
       <Chart
         options={{
-          data: chartData,
+          data,
           primaryAxis,
           secondaryAxes,
-          defaultColors: ['#3b82f6'],
           
         }}
       />
