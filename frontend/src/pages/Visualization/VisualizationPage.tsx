@@ -88,19 +88,26 @@ const VisualizationPage = () => {
   return (
     <div className="flex flex-row min-h-screen">
       <Sidebar isLoading={false} error={null} handleLogout={() => logout()} />
-      <div className="flex flex-col min-h-screen w-full mainCenter">
-        <ChartCanvas
-          canvases={canvases}
-          selectedCanvasId={selectedCanvasId}
-          onCanvasSelect={setSelectedCanvasId}
-          onAddCanvas={addCanvas}
-          onLayoutChange={handleLayoutChange}
-          onRemoveChart={removeChart}
-          onDeleteCanvas={deleteCanvas}
-          onSelectChart={setSelectedChartId} // Pass the setSelectedChartId function
-        />
+      <div className="flex flex-col w-full min-h-screen overflow-hidden mainCenter">
+      <h1 className='text-5xl font-rowdies text-center py-7'> Visualization </h1>
+        <div className="flex flex-col flex-1 p-4 space-y-4">
+          <div className="flex-1 relative overflow-hidden">
+            <ChartCanvas
+              canvases={canvases}
+              selectedCanvasId={selectedCanvasId}
+              onCanvasSelect={setSelectedCanvasId}
+              onAddCanvas={addCanvas}
+              onLayoutChange={handleLayoutChange}
+              onRemoveChart={removeChart}
+              onDeleteCanvas={deleteCanvas}
+              onSelectChart={setSelectedChartId} // Pass the setSelectedChartId function
+            />
+          </div>
+        </div>
       </div>
-      <div className="flex flex-col min-h-screen w-1/6 rounded-lg border-2 border-black sidebar">
+      <div className="flex flex-col w-1/5 border-l-2 border-gray-200 p-4 space-y-4 sidebar">
+      <FilePanel />
+      <div className="flex-1 overflow-hidden">
         {selectedCanvas && (
           <VisualizationPanel
             charts={selectedCanvas.charts}
@@ -108,11 +115,9 @@ const VisualizationPage = () => {
             updateChart={updateChart}
             selectedChartId={selectedChartId}
             setSelectedChartId={setSelectedChartId}
-          />      
+          />
         )}
-      </div>
-      <div className="flex flex-col min-h-screen w-1/6 sidebar rounded-lg border-2 border-black">
-        <FilePanel />
+        </div>
       </div>
     </div>
   );

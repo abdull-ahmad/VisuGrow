@@ -20,8 +20,8 @@ export const FilePanel: React.FC = () => {
   };
 
   return (
-    <div className='p-4 border-2 border-gray-200 rounded-lg shadow-sm bg-white'>
-      <h2 className='text-lg font-semibold mb-4 text-gray-700'>Select Dataset</h2>
+    <div className='p-4 border-2 border-gray-200 rounded-lg shadow-sm mainCenter'>
+      <h2 className='text-lg font-rowdies mb-4'>Select Dataset</h2>
       <div className='space-y-4'>
         {files?.length === 0 && <p className='text-gray-500'>No files available</p>}
         {files && files.length > 0 && (
@@ -41,7 +41,7 @@ export const FilePanel: React.FC = () => {
             <button 
               onClick={handleFileOpen} 
               disabled={!selectedFileId}
-              className={`w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ${
+              className={`w-full py-2 px-4 customColorButton text-white rounded-md transition-colors ${
                 !selectedFileId ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >

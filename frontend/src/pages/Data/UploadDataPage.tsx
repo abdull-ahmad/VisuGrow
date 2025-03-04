@@ -95,6 +95,10 @@ const UploadDataPage = () => {
                     'yyyy/MM/dd', // Another common format
                     'yyyy-MM-dd\'T\'HH:mm:ss', // ISO datetime format
                     'yyyy-MM-dd\'T\'HH:mm:ss.SSS', // ISO datetime with milliseconds
+                    'd-MMM-yy',
+                    'dd-MMM-yy',
+                    'd-MMM-yyyy',
+                    'dd-MMM-yyyy',
                 ];
     
                 for (const format of dateFormats) {
@@ -233,6 +237,10 @@ const UploadDataPage = () => {
                             'yyyy/MM/dd', // Another common format
                             'yyyy-MM-dd\'T\'HH:mm:ss', // ISO datetime format
                             'yyyy-MM-dd\'T\'HH:mm:ss.SSS', // ISO datetime with milliseconds
+                            'd-MMM-yy',
+                            'dd-MMM-yy',
+                            'd-MMM-yyyy',
+                            'dd-MMM-yyyy',
                         ];
                         for (const format of dateFormats) {
                             const parsedDate = parse(trimmedValue, format, new Date());

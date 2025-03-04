@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDataStore } from '../../store/dataStore';
 import { ChartConfig, VisualizationPanelProps } from '../../types/Chart';
+import { ChartArea, ChartColumnIncreasing, ChartLine } from 'lucide-react';
 
 export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
   charts,
@@ -35,12 +36,16 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
     updateChart(chartId, { yParameter: newY });
   };
 
+  const handleColorChange = (chartId: string, newColor: string) => {
+    updateChart(chartId, { color: newColor });
+  };
+
   return (
-    <div className="p-4 border-2 border-gray-200 rounded-lg shadow-sm bg-white">
-      <h2 className="text-lg font-semibold mb-4 text-gray-700">Visualization Settings</h2>
+    <div className="p-4 border-2 border-gray-200 rounded-lg shadow-sm mainCenter">
+      <h2 className="text-lg font-rowdies mb-4">Visualization Settings</h2>
       <button
         onClick={handleAddChart}
-        className="mb-4 w-full py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+        className="mb-4 w-full py-2 customColorButton text-white rounded-md "
       >
         Add New Chart
       </button>
@@ -48,7 +53,7 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
       {charts.length > 0 && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-600">Select Chart</label>
+            <label className="block text-sm font-medium mb-2 font-poppins">Select Chart</label>
             <select
               value={selectedChartId || ''}
               onChange={(e) => setSelectedChartId(e.target.value)}
@@ -66,43 +71,40 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
           {selectedChart && (
             <>
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-600">Chart Type</label>
+                <label className="block text-sm font-medium mb-2 font-poppins">Chart Type</label>
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleChartTypeChange(selectedChart.id, 'bar')}
-                    className={`px-4 py-2 rounded-md ${
-                      selectedChart.chartType === 'bar'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-4 py-2 rounded-md ${selectedChart.chartType === 'bar'
+                      ? 'customColorButton text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                   >
-                    Bar
+                    <ChartColumnIncreasing />
                   </button>
                   <button
                     onClick={() => handleChartTypeChange(selectedChart.id, 'line')}
-                    className={`px-4 py-2 rounded-md ${
-                      selectedChart.chartType === 'line'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-4 py-2 rounded-md ${selectedChart.chartType === 'line'
+                      ? 'customColorButton text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                   >
-                    Line
+                    <ChartLine />
                   </button>
                   <button
                     onClick={() => handleChartTypeChange(selectedChart.id, 'area')}
-                    className={`px-4 py-2 rounded-md ${
-                      selectedChart.chartType === 'area'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`px-4 py-2 rounded-md ${selectedChart.chartType === 'area'
+                      ? 'customColorButton text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                   >
-                    Area
+                    <ChartArea />
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-600">X-Axis Parameter</label>
+                <label className="block text-sm font-medium mb-2 font-poppins">X-Axis Parameter</label>
                 <select
                   value={selectedChart.xParameter}
                   onChange={(e) => handleXChange(selectedChart.id, e.target.value)}
@@ -118,7 +120,7 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-600">Y-Axis Parameter</label>
+                <label className="block text-sm font-medium mb-2 font-poppins">Y-Axis Parameter</label>
                 <select
                   value={selectedChart.yParameter}
                   onChange={(e) => handleYChange(selectedChart.id, e.target.value)}
@@ -133,10 +135,21 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
                 </select>
               </div>
 
+              <label className="block text-sm font-medium mb-2 font-poppins">Chart Color</label>
+              <input
+                type="color"
+                value={selectedChart.color || '#3b82f6'}
+                onChange={(e) => handleColorChange(selectedChart.id, e.target.value)}
+                className="w-full p-1 h-10 rounded cursor-pointer"
+              />
+              
             </>
           )}
         </div>
-      )}
-    </div>
+      )
+      }
+
+
+    </div >
   );
 };

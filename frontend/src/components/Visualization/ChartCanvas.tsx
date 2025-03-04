@@ -1,82 +1,11 @@
 import React from 'react';
-import Bar from '../Charts/Bar';
-import Line from '../Charts/Line';
-import { useDataStore } from '../../store/dataStore';
-import { ChartCanvasProps, ChartConfig } from '../../types/Chart';
 import html2canvas from 'html2canvas';
-import  GridLayout from 'react-grid-layout';
+import { ChartCanvasProps} from '../../types/Chart';
+import { ArrowDownToLine, CircleFadingPlus, Trash } from 'lucide-react';
+import { SingleChart } from './SingleChart';
+import GridLayout from 'react-grid-layout';
 import '/node_modules/react-grid-layout/css/styles.css';
 import '/node_modules/react-resizable/css/styles.css';
-
-const SingleChart: React.FC<{
-  chart: ChartConfig;
-  onDownload: () => void;
-  onSelect: () => void;
-  onDelete: () => void;
-
-}> = ({ chart, onDownload, onSelect, onDelete }) => {
-
-  const { fileData } = useDataStore();
-
-  const chartData = React.useMemo(() => {
-    if (!fileData || !chart.xParameter || !chart.yParameter) return [];
-    return [
-      {
-        label: `${chart.yParameter} vs ${chart.xParameter}`,
-        data: fileData.map((item: any) => ({
-          primary: item[chart.xParameter],
-          secondary: item[chart.yParameter],
-        })),
-      },
-    ];
-  }, [fileData, chart.xParameter, chart.yParameter]);
-
-  let content;
-  if (!fileData || fileData.length === 0) {
-    content = <div className="text-gray-500 p-4">No data available</div>;
-  } else if (!chart.chartType) {
-    content = <div className="text-gray-500 p-4">Select a chart type to begin</div>;
-  } else if (!chart.xParameter || !chart.yParameter) {
-    content = <div className="text-gray-500 p-4">Select both X and Y parameters</div>;
-  } else {
-    switch (chart.chartType) {
-      case 'bar':
-        content = <div className='h-full w-full'> <Bar chartData={chartData} xLabel={chart.xParameter} yLabel={chart.yParameter} /> </div>;
-        break;
-      case 'line':
-        content = <div className='h-full w-full'><Line chartData={chartData} xLabel={chart.xParameter} yLabel={chart.yParameter} /> </div>;
-        break;
-      // Add cases for 'line' and 'area' when components are available
-      default:
-        content = <div>Unsupported chart type</div>;
-    }
-  }
-
-  return (
-    <div className="relative h-full w-full p-4 border rounded-lg overflow-hidden" 
-    id={`chart-${chart.id}`}
-    onClick={onSelect}
-    >
-      <div className="absolute top-1 right-1 flex gap-1">
-        <button
-          onClick={onDownload}
-          className="p-1 bg-white rounded "
-          title="Download Chart"
-        >
-          ⬇️
-        </button>
-        <button
-          onClick={onDelete}
-          className="p-1 bg-white rounded text-red-500"
-          title="Delete Chart"
-        >
-          🗑️
-        </button>
-      </div>
-      {content}
-    </div>
-  );
-};
 
 export const ChartCanvas: React.FC<ChartCanvasProps> = ({
   canvases,
@@ -120,22 +49,77 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
   };
 
   return (
-    <div className="w-full h-full overflow-hidden">
-      <div className="flex items-center gap-4 p-4 border-b">
+    <div className="w-full h-full overflow-hidden flex flex-col">
+      <div className="flex-1 relative">
+        <div className="absolute inset-0">
+          {canvases
+            .filter(canvas => canvas.id === selectedCanvasId)
+            .map(canvas => (
+              <div key={canvas.id} id={`canvas-${canvas.id}`}
+                className="custom-scrollbar bg-white shadow-sm rounded-lg"
+                style={{
+                  width: 'full',
+                  height: 'calc(100vh - 11.5rem)',
+                  overflow: 'auto'
+                }}
+              >
+                <GridLayout
+                  className="layout bg-white"
+                  layout={canvas.layout}
+                  cols={12}
+                  rowHeight={30}
+                  width={1200}
+                  onLayoutChange={handleLayoutChange}
+                  draggableHandle=".drag-handle"
+                  isResizable={true}
+                  isDraggable={true}
+                >
+                  {canvas.charts.map(chart => (
+                    <div
+                      key={chart.id}
+                      data-grid={(canvas.layout && canvas.layout.find(l => l.i === chart.id)) || {
+                        x: 0, y: 0, w: 4, h: 6
+                      }}
+                    >
+                      <SingleChart
+                        key={chart.id}
+                        chart={chart}
+                        onSelect={() => onSelectChart(chart.id)}
+                        onDelete={() => onRemoveChart(chart.id)}
+                        onDownload={() => handleDownloadChart(chart.id)}
+                      />
+                      <div className="drag-handle" style={{
+                        position: 'absolute',
+                        top: 5,
+                        left: 5,
+                        cursor: 'move',
+                        padding: '2px 5px',
+                        borderRadius: 3
+                      }}> ⠿
+                      </div>
+                    </div>
+                  ))}
+                </GridLayout>
+              </div>
+            ))}
+        </div>
+      </div>
+
+      <div className="flex flex-row w-full items-center gap-4 p-4 border-b fixed bottom-0">
         <button
           onClick={onAddCanvas}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="px-4 py-2 customColorButton text-white rounded-md"
         >
-          New Canvas
+          <CircleFadingPlus/>
         </button>
         <div className="flex gap-2 overflow-auto">
           {canvases.map(canvas => (
             <button
               key={canvas.id}
               onClick={() => onCanvasSelect(canvas.id)}
-              className={`px-4 py-2 rounded-md min-w-[100px] ${canvas.id === selectedCanvasId
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300'
+              className={`px-2 py-1 text-white font-poppins rounded-md ${canvas.id === selectedCanvasId
+                ? 'customColorButton'
+                : 'bg-custom hover:bg-gray-300'
                 }`}
             >
               {canvas.name}
@@ -145,9 +129,9 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
                     e.stopPropagation();
                     handleDownloadCanvas(canvas.id);
                   }}
-                  className="text-sm hover:text-blue-600"
+                  className="text-xs hover:text-blue-600"
                 >
-                  ⬇️
+                  <ArrowDownToLine />
                 </button>
                 {canvases.length > 1 && (
                   <button
@@ -157,61 +141,13 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
                     }}
                     className="text-sm hover:text-red-600"
                   >
-                    🗑️
+                    <Trash />
                   </button>
                 )}
               </div>
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="h-full overflow-hidden">
-        {canvases
-          .filter(canvas => canvas.id === selectedCanvasId)
-          .map(canvas => (
-            <div key={canvas.id} id={`canvas-${canvas.id}`} className="h-full">
-              <GridLayout
-                className="layout"
-                layout={canvas.layout}
-                cols={12}
-                rowHeight={30}
-                width={1200}
-                onLayoutChange={handleLayoutChange}
-                draggableHandle=".drag-handle"
-                isResizable={true}
-                isDraggable={true}
-                snapToGrid={true} // Enable snap-to-grid
-              >
-                {canvas.charts.map(chart => (
-                  <div
-                    key={chart.id}
-                    data-grid={(canvas.layout && canvas.layout.find(l => l.i === chart.id)) || {
-                      x: 0, y: 0, w: 4, h: 6
-                    }}
-                  >
-                    <SingleChart
-                      key={chart.id}
-                      chart={chart}
-                      onSelect={() => onSelectChart(chart.id)}
-                      onDelete={() => onRemoveChart(chart.id)}
-                      onDownload={() => handleDownloadChart(chart.id)}
-                    />
-                    <div className="drag-handle" style={{
-                      position: 'absolute',
-                      top: 5,
-                      left: 5,
-                      cursor: 'move',
-                      padding: '2px 5px',
-                      background: 'rgba(0,0,0,0.1)',
-                      borderRadius: 3
-                    }}> ⠿
-                    </div>
-                  </div>
-                ))}
-              </GridLayout>
-            </div>
-          ))}
       </div>
     </div>
   );

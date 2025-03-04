@@ -19,9 +19,18 @@ export interface VisualizationPanelProps {
 
 export interface ChartConfig {
   id: string;
-  chartType: 'bar' | 'line' | 'area' | null;
+  chartType: 'bar' | 'line' | 'area';
   xParameter: string;
   yParameter: string;
+  color?: string;
+  filter?: {
+    field: string;
+    operator: '>' | '<' | '=' | '!=';
+    value: string;
+  };
+  // Add to ChartConfig type
+  dateInterval?: 'year' | 'month' | 'week' | 'day';
+  aggregateType?: 'sum' | 'average' | 'count';
 }
 
 export interface CanvasConfig {
