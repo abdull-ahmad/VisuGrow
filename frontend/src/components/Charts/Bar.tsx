@@ -9,17 +9,17 @@ interface BarProps {
   }[];
   xLabel: string;
   yLabel: string;
-  
 }
 
 export default function Bar({ chartData, xLabel, yLabel }: BarProps) {
+
   const primaryAxis = React.useMemo<AxisOptions<any>>(
     () => ({
       getValue: (datum) => datum.primary,
       position: 'bottom',
       label: xLabel,
     }),
-    [xLabel]
+    [xLabel, chartData]
   );
 
   const secondaryAxes = React.useMemo<AxisOptions<any>[]>(
@@ -28,14 +28,13 @@ export default function Bar({ chartData, xLabel, yLabel }: BarProps) {
         getValue: (datum) => datum.secondary,
         position: 'left',
         label: yLabel,
-        scaleType: 'linear',
       },
     ],
-    [yLabel]
+    [yLabel, chartData]
   );
 
   return (
-    
+
     <div className="h-full w-full flex flex-col">
       <Chart
         options={{
@@ -48,7 +47,7 @@ export default function Bar({ chartData, xLabel, yLabel }: BarProps) {
       <div className="flex justify-center gap-4 mt-2">
         {chartData.map((series) => (
           <div key={series.label} className="flex items-center gap-2">
-            <div 
+            <div
               className="w-4 h-4 rounded-sm"
               style={{ backgroundColor: series.color || '#3b82f6' }}
             />

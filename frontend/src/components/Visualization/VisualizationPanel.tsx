@@ -142,14 +142,11 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
                 onChange={(e) => handleColorChange(selectedChart.id, e.target.value)}
                 className="w-full p-1 h-10 rounded cursor-pointer"
               />
-              
+
             </>
           )}
         </div>
-      )
-      }
-
-
+      )}
     </div >
   );
 };

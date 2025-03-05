@@ -17,6 +17,8 @@ export interface VisualizationPanelProps {
   updateChart: (id: string, updatedChart: Partial<ChartConfig>) => void;
 }
 
+export type TimeScale = 'year' | 'month' | 'week' | 'day';
+
 export interface ChartConfig {
   id: string;
   chartType: 'bar' | 'line' | 'area';
@@ -28,9 +30,8 @@ export interface ChartConfig {
     operator: '>' | '<' | '=' | '!=';
     value: string;
   };
-  // Add to ChartConfig type
-  dateInterval?: 'year' | 'month' | 'week' | 'day';
-  aggregateType?: 'sum' | 'average' | 'count';
+  xAggregation?: 'year' | 'month' | 'week' | 'day';
+  yAggregation?: 'sum' | 'average' | 'count';
 }
 
 export interface CanvasConfig {
