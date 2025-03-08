@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Loader, CircleUserRound, Trash2, Store, FileText, Clock, Calendar, Search, AlertTriangle, Filter, Eye } from 'lucide-react';
+import { Loader, CircleUserRound, Trash2, Store, FileText, Clock, Calendar, Search, AlertTriangle, Eye } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useDataStore } from '../../store/dataStore';
 import { DataSheetGrid, Column, keyColumn, textColumn, intColumn, percentColumn, dateColumn } from 'react-datasheet-grid';
 import Modal from '../../components/Modal';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/SideBar';
-import './custom.css';
 import ProfileModal from '../../components/ProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';

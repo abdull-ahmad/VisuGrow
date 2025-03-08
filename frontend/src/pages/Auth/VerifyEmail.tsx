@@ -5,7 +5,6 @@ import { Loader, AlertCircle, Mail, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from 'framer-motion';
 
-import "./custom.css";
 
 const VerifyEmail = () => {
   // Use an array of strings for each digit

@@ -4,8 +4,6 @@ import { useAuthStore } from '../../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-import "./custom.css";
-
 const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

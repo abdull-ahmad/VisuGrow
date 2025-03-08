@@ -127,7 +127,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                                     <div className="bg-white bg-opacity-20 rounded-full p-2">
                                         <User size={20} className="text-white" />
                                     </div>
-                                    <h2 className="text-2xl font-bold">Edit Profile</h2>
+                                    <h2 className="text-2xl font-rowdies">Edit Profile</h2>
                                 </div>
                                 <button
                                     onClick={onClose}
@@ -137,7 +137,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                                     <X size={18} />
                                 </button>
                             </div>
-                            <p className="mt-2 text-blue-100 opacity-80">
+                            <p className="mt-2 text-blue-100 opacity-80 font-poppins">
                                 Update your personal information and password
                             </p>
                         </div>
@@ -146,14 +146,14 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                         <div className="flex border-b">
                             <button
                                 onClick={() => setActiveTab('profile')}
-                                className={`flex-1 py-3 px-4 font-medium text-sm relative ${
+                                className={`flex-1 py-3 px-4 font-poppins text-sm relative ${
                                     activeTab === 'profile' 
                                         ? 'text-blue-600' 
                                         : 'text-gray-500 hover:text-gray-700'
                                 }`}
                             >
-                                <span className="flex items-center justify-center">
-                                    <User size={16} className="mr-2" />
+                                <span className="flex items-center justify-center font-poppins">
+                                    <User size={16} className="mr-2 " />
                                     Profile Details
                                 </span>
                                 {activeTab === 'profile' && (
@@ -165,13 +165,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                             </button>
                             <button
                                 onClick={() => setActiveTab('security')}
-                                className={`flex-1 py-3 px-4 font-medium text-sm relative ${
+                                className={`flex-1 py-3 px-4 font-poppins text-sm relative ${
                                     activeTab === 'security' 
                                         ? 'text-blue-600' 
                                         : 'text-gray-500 hover:text-gray-700'
                                 }`}
                             >
-                                <span className="flex items-center justify-center">
+                                <span className="flex items-center justify-center font-poppins">
                                     <Lock size={16} className="mr-2" />
                                     Security
                                 </span>
@@ -193,7 +193,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                                 >
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label className="block text-sm font-poppins text-gray-700 mb-1">
                                                 Full Name
                                             </label>
                                             <div className="relative">
@@ -218,13 +218,13 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                                         </div>
 
                                         <div className="pt-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label className="block text-sm font-poppins text-gray-700 mb-1">
                                                 Email Address
                                             </label>
                                             <div className="w-full px-3 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-500">
                                                 {user?.email || 'email@example.com'}
                                             </div>
-                                            <p className="mt-1.5 text-xs text-gray-500">
+                                            <p className="mt-1.5 text-xs text-gray-500 font-poppins">
                                                 Email cannot be changed
                                             </p>
                                         </div>
@@ -234,7 +234,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                                         <button
                                             onClick={handleUpdateProfile}
                                             disabled={loading || name === user?.name}
-                                            className={`flex items-center px-6 py-2.5 rounded-lg font-medium ${
+                                            className={`flex items-center px-6 py-2.5 rounded-lg font-poppins ${
                                                 loading || name === user?.name
                                                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                                                     : 'bg-[#053252] text-white hover:bg-[#0a4470] transition-colors'
@@ -262,7 +262,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                                 >
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label className="block text-sm font-poppins text-gray-700 mb-1">
                                                 Current Password
                                             </label>
                                             <div className="relative">
@@ -287,7 +287,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                                         </div>
                                         
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label className="block text-sm font-poppins text-gray-700 mb-1">
                                                 New Password
                                             </label>
                                             <div className="relative">
@@ -327,7 +327,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
                                         <button
                                             onClick={handleChangePassword}
                                             disabled={loading || !currentPassword || !newPassword}
-                                            className={`flex items-center px-6 py-2.5 rounded-lg font-medium ${
+                                            className={`flex items-center px-6 py-2.5 rounded-lg font-poppins ${
                                                 loading || !currentPassword || !newPassword
                                                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                                                     : 'bg-[#053252] text-white hover:bg-[#0a4470] transition-colors'

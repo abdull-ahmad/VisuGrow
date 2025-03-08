@@ -36,8 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isLoading, error, handleLogout }) => 
 
     return (
         <motion.div 
-            className={`relative flex flex-col h-screen  text-white ${collapsed ? 'w-20' : 'w-64'} transition-all duration-300 ease-in-out`}
-            style={{ backgroundColor: '#053252' }}
+            className={`bg-[#053252] relative flex flex-col h-screen  text-white ${collapsed ? 'w-20' : 'w-64'} transition-all duration-300 ease-in-out`}
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}
