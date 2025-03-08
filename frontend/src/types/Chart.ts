@@ -15,23 +15,19 @@ export interface VisualizationPanelProps {
   charts: ChartConfig[];
   addChart: (chart: ChartConfig) => void;
   updateChart: (id: string, updatedChart: Partial<ChartConfig>) => void;
+  onRemoveChart: (chartId: string) => void;
 }
 
 export type TimeScale = 'year' | 'month' | 'week' | 'day';
 
 export interface ChartConfig {
   id: string;
-  chartType: 'bar' | 'line' | 'area';
+  chartType: 'bar' | 'line' | 'area' | 'pie' | 'radar' | 'radial' | 'funnel';
   xParameter: string;
   yParameter: string;
   color?: string;
-  filter?: {
-    field: string;
-    operator: '>' | '<' | '=' | '!=';
-    value: string;
-  };
-  xAggregation?: 'year' | 'month' | 'week' | 'day';
-  yAggregation?: 'sum' | 'average' | 'count';
+  dateFilterType?: 'year' | 'month' | 'week' | 'day';
+  numberFilterType?: 'increasing' | 'decreasing' ;
 }
 
 export interface CanvasConfig {

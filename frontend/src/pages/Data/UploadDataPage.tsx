@@ -1,10 +1,6 @@
-import './custom.css'
 import React, { useEffect, useState } from 'react'
 import Modal from '../../components/Modal';
-import SheetIcon from '../../Icons/SheetIcon'
-import StoreIcon from '../../Icons/StoreIcon'
-import UploadIcon from '../../Icons/UploadIcon'
-import { File } from 'lucide-react'
+import { File, UploadCloud, Grid, ShoppingBag, Search, AlertTriangle, X, Plus, ChevronRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore'
 import 'react-datasheet-grid/dist/style.css'
 import * as XLSX from 'xlsx';
@@ -22,7 +18,8 @@ import { useDataStore } from '../../store/dataStore';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/SideBar';
 import { useNavigate } from 'react-router-dom';
-import {isValid , parse } from 'date-fns';
+import { isValid, parse } from 'date-fns';
+import { motion } from 'framer-motion';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -44,12 +41,12 @@ const UploadDataPage = () => {
     const { logout, isLoading, error } = useAuthStore();
     const { saveFile, fileerror } = useDataStore();
     const [nullCount, setNullCount] = useState(0);
+    const [fileIsLoading, setFileIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleLogout = async () => { logout(); }
 
     const openModal = () => setIsModalOpen(true);
-
 
     // Helper function to determine column type
     const getColumnType = (column: Column): 'text' | 'number' | 'percent' | 'date' => {
@@ -61,10 +58,12 @@ const UploadDataPage = () => {
         return 'text';
     };
 
+    // Rest of your helper functions remain the same
     const determineColumnType = (values: (string | number | Date | null)[]): 'text' | 'number' | 'date' | 'percent' => {
+        // Existing implementation
         for (const value of values) {
             if (value === null) continue;
-    
+
             // Check if the value is already a number
             if (typeof value === 'number') {
                 return 'number';
@@ -73,7 +72,7 @@ const UploadDataPage = () => {
             if (typeof value === 'string') {
                 // Trim whitespace from the string
                 const trimmedValue = value.trim();
-    
+
                 // Check if the value is a percentage
                 if (trimmedValue.endsWith('%')) {
                     const numericValue = trimmedValue.slice(0, -1); // Remove the '%' sign
@@ -81,12 +80,12 @@ const UploadDataPage = () => {
                         return 'percent';
                     }
                 }
-    
+
                 // Check if the value is a number
                 if (!isNaN(Number(trimmedValue))) {
                     return 'number';
                 }
-    
+
                 // Check if the value is a date
                 const dateFormats = [
                     'yyyy-MM-dd', // ISO format
@@ -100,7 +99,7 @@ const UploadDataPage = () => {
                     'd-MMM-yyyy',
                     'dd-MMM-yyyy',
                 ];
-    
+
                 for (const format of dateFormats) {
                     const parsedDate = parse(trimmedValue, format, new Date());
                     if (isValid(parsedDate)) {
@@ -109,7 +108,7 @@ const UploadDataPage = () => {
                 }
             }
         }
-    
+
         // Default to text if no other type is detected
         return 'text';
     };
@@ -129,14 +128,18 @@ const UploadDataPage = () => {
 
     const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!event?.target?.files?.length) return;
-    
+
+        setFileIsLoading(true);
         const file = event.target.files[0];
         const reader = new FileReader();
         const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    
+
         reader.onload = (e) => {
-            if (!e?.target?.result) return;
-    
+            if (!e?.target?.result) {
+                setFileIsLoading(false);
+                return;
+            }
+
             try {
                 if (fileExtension === 'xlsx' || fileExtension === 'xls') {
                     const data = new Uint8Array(e.target.result as ArrayBuffer);
@@ -144,7 +147,7 @@ const UploadDataPage = () => {
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     const jsonData: (string | number | Date | null)[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, dateNF: 'yyyy-mm-dd' });
-    
+
                     const headers = jsonData[0] as string[];
                     const rows = jsonData.slice(1).map(row => {
                         const rowObject: { [key: string]: string | number | Date | null } = {};
@@ -153,7 +156,7 @@ const UploadDataPage = () => {
                         });
                         return rowObject;
                     });
-    
+
                     const { columns, rowData } = processData(headers, rows);
                     setColDefs(columns);
                     setRowData(rowData);
@@ -171,7 +174,7 @@ const UploadDataPage = () => {
                                 });
                                 return rowObject;
                             });
-    
+
                             const { columns, rowData } = processData(headers, rows);
                             setColDefs(columns);
                             setRowData(rowData);
@@ -188,9 +191,11 @@ const UploadDataPage = () => {
             } catch (error) {
                 toast.error('Error processing file');
                 console.error(error);
+            } finally {
+                setFileIsLoading(false);
             }
         };
-    
+
         if (fileExtension === 'csv') {
             reader.readAsText(file);
         } else {
@@ -198,7 +203,7 @@ const UploadDataPage = () => {
         }
     };
 
-    // Updated processData function to handle null values
+    // Data processing functions remain the same
     const processData = (
         headers: string[],
         rows: Array<{ [key: string]: string | number | Date | null }>
@@ -208,7 +213,7 @@ const UploadDataPage = () => {
             const columnType = determineColumnType(rows.map(row => row[header]));
             return createColumn(header, columnType);
         });
-    
+
         // Row Data Mapping
         const rowDataMapped = rows.map((row: { [key: string]: string | number | Date | null }) => {
             const mappedRowData: { [key: string]: string | number | Date | null } = {};
@@ -216,7 +221,7 @@ const UploadDataPage = () => {
                 let cellValue = row[header];
                 if (typeof cellValue === 'string') {
                     const trimmedValue = cellValue.trim();
-    
+
                     // Handle percentage values
                     if (trimmedValue.endsWith('%')) {
                         const numericValue = trimmedValue.slice(0, -1);
@@ -255,11 +260,11 @@ const UploadDataPage = () => {
             });
             return mappedRowData;
         });
-    
+
         return { columns, rowData: rowDataMapped };
     };
 
-
+    // Event handlers remain largely the same
     const handleColumnFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -305,24 +310,23 @@ const UploadDataPage = () => {
 
     const handleFileSave = async () => {
         try {
-            
             const columnInfo = colDefs.map(col => ({
                 title: col.title,
                 type: getColumnType(col)
             }));
-    
-            await saveFile({ 
-                rows: rowData, 
-                columns: columnInfo, 
+
+            await saveFile({
+                rows: rowData,
+                columns: columnInfo,
                 fileName: fileName || 'default_filename'
             });
-            
+
             toast.success('File saved successfully!');
 
             setTimeout(() => {
                 navigate(0);
             }, 2000);
-            
+
         } catch (error) {
             console.error('Error saving file:', error);
         }
@@ -343,208 +347,361 @@ const UploadDataPage = () => {
     useEffect(() => {
         setNullCount(countNullValues(rowData));
     }, [rowData]);
+
     return (
-        <div className='flex flex-row min-h-screen '>
+        <div className='flex h-screen bg-[#4a8cbb1b]'>
             <Sidebar isLoading={isLoading} error={error} handleLogout={handleLogout} />
-            <div className='flex flex-col min-h-screen w-full mainCenter'>
-                <h1 className='text-5xl font-rowdies text-center py-8'> Upload Data </h1>
-                <div className='flex flex-row justify-center items-center'>
-                    {!fileName ? (
-                        <div className='flex flex-row bg-white p-4 w-3/4 min-w-fit rounded-2xl border-2 border-black py-10'>
-                            <UploadIcon />
-                            <div className='flex flex-col w-3/4'>
-                                <label className='text-xl font-rowdies py-2'> Upload Data </label>
-                                <input
-                                    className='border-2 border-dotted border-gray-300 rounded-md p-2'
-                                    type='file'
-                                    accept='.csv, .json, .xlsx, .xls'
-                                    onChange={handleUpload}
-                                    id="fileInput"
-                                />
+            <div className='flex-1 overflow-auto'>
+                <header className='bg-[#4a8cbb1b] shadow-sm px-8 py-6'>
+                    <h1 className='text-3xl font-rowdies text-gray-800'>Data Management</h1>
+                    <p className='text-gray-500 mt-1 font-poppins'>Upload, create, or integrate data sources</p>
+                </header>
+
+                <main className='max-w-7xl mx-auto px-4 py-8 space-y-8'>
+                    {/* Upload Data Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className='bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100'
+                    >
+                        <div className='border-b border-gray-100 px-6 py-4 bg-gradient-to-r from-blue-50 to-white flex items-center'>
+                            <div className='bg-blue-100 p-2 rounded-lg mr-4'>
+                                <UploadCloud size={24} className='text-[#053252]' />
                             </div>
-                            
+                            <div>
+                                <h2 className='text-lg font-rowdies text-gray-800'>Upload Data File</h2>
+                            </div>
                         </div>
-                    ) : (
-                        <div className='flex flex-row bg-white p-4 w-3/4 min-w-fit rounded-2xl border-2 border-black py-10'>
-                            <UploadIcon />
-                            <div className='flex flex-col w-3/4'>
-                                <h2 className='text-xl font-rowdies'>Uploaded File</h2>
-                                <div className='flex flex-row border-2 border-dotted border-gray-300 rounded-md p-2 mt-2'>
-                                    <File />
-                                    <label className='text-xl '>  {fileName}</label>
+
+                        <div className='p-6'>
+                            {!fileName ? (
+                                <div className='flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg py-12 px-6 bg-gray-50'>
+                                    <UploadCloud size={48} className='text-blue-400 mb-4' />
+                                    <p className='text-gray-600 mb-6 text-center font-poppins'>
+                                        Upload your file here
+                                    </p>
+                                    <label className='bg-[#053252] text-white rounded-lg px-6 py-2.5 
+                                        cursor-pointer transition-colors font-poppins flex items-center shadow-sm'>
+                                        {fileIsLoading ? (
+                                            <><Loader2 size={18} className='mr-2 animate-spin' /> Uploading...</>
+                                        ) : (
+                                            <>Select File</>
+                                        )}
+                                        <input
+                                            type='file'
+                                            accept='.csv, .xlsx, .xls'
+                                            onChange={handleUpload}
+                                            className='hidden'
+                                            disabled={fileIsLoading}
+                                        />
+                                    </label>
+                                    <p className='text-xs text-gray-400 mt-4'>
+                                        Supported formats: .csv, .xlsx, .xls
+                                    </p>
                                 </div>
+                            ) : (
+                                <div className='flex items-center justify-between'>
+                                    <div className='flex items-center'>
+                                        <div className='bg-blue-100 p-3 rounded-lg'>
+                                            <File size={24} className='text-blue-700' />
+                                        </div>
+                                        <div className='ml-4'>
+                                            <h3 className='font-poppins text-gray-800'>{fileName}</h3>
+                                            <p className='text-sm text-gray-500 font-poppins'>{rowData.length} rows • {colDefs.length} columns</p>
+                                        </div>
+                                    </div>
+                                    <div className='flex space-x-3'>
+                                        <button
+                                            onClick={openModal}
+                                            className='bg-blue-50 hover:bg-blue-100 text-blue-700 font-poppins px-4 py-2 
+                                            rounded-lg transition-colors flex items-center'
+                                        >
+                                            <ChevronRight size={16} className='mr-1' /> View & Edit
+                                        </button>
+                                        <button
+                                            onClick={clearFile}
+                                            className='border border-gray-200 hover:bg-gray-50 text-gray-600 font-popppins px-4 py-2 
+                                            rounded-lg transition-colors flex items-center'
+                                        >
+                                            <X size={16} className='mr-1' /> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+
+                    {/* Create Sheet Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className='bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100'
+                    >
+                        <div className='border-b border-gray-100 px-6 py-4 bg-gradient-to-r from-purple-50 to-white flex items-center'>
+                            <div className='bg-purple-100 p-2 rounded-lg mr-4'>
+                                <Grid size={24} className='text-purple-700' />
                             </div>
-                            <div className='flex flex-col w-1/4 items-center'>
+                            <div>
+                                <h2 className='text-lg font-rowdies text-gray-800'>Create Data Sheet</h2>
+                                <p className='text-sm text-gray-500'>Build a custom data sheet from scratch</p>
+                            </div>
+                        </div>
+
+                        <div className='p-6'>
+                            <div className='flex items-center justify-between'>
+                                <div className='max-w-lg'>
+                                    <p className='text-gray-600 mb-1'>Don't have data ready to upload?</p>
+                                    <p className='text-sm text-gray-500'>Create a custom data sheet with your own columns and data types.</p>
+                                </div>
                                 <button
-                                    className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'
-                                    onClick={openModal}
+                                    onClick={() => setIsColumnFormOpen(true)}
+                                    className='bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800
+                                        text-white shadow-sm rounded-lg px-6 py-2.5 font-poppins transition-all'
                                 >
-                                    Reopen File
-                                </button>
-                                <button
-                                    className='bg-red-500 font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'
-                                    onClick={clearFile}
-                                >
-                                    Clear
+                                    Create New Sheet
                                 </button>
                             </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Integration Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className='bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100'
+                    >
+                        <div className='border-b border-gray-100 px-6 py-4 bg-gradient-to-r from-green-50 to-white flex items-center'>
+                            <div className='bg-green-100 p-2 rounded-lg mr-4'>
+                                <ShoppingBag size={24} className='text-green-700' />
+                            </div>
+                            <div>
+                                <h2 className='text-lg font-rowdies text-gray-800'>E-commerce Integration</h2>
+                                <p className='text-sm text-gray-500'>Connect your online store</p>
+                            </div>
+                        </div>
+
+                        <div className='p-6'>
+                            <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+                                <div className='space-y-2'>
+                                    <p className='text-gray-600'>Seamlessly connect your e-commerce store</p>
+                                    
+                                </div>
+                                <button
+                                    onClick={() => toast.error('Coming Soon!')}
+                                    className='bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800
+                                        text-white shadow-sm rounded-lg px-6 py-2.5 font-poppins transition-all whitespace-nowrap'
+                                >
+                                    Connect Store
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </main>
+            </div>
+
+            {/* Modals */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                onSearchReplace={handleSearchReplace}
+                onSave={handleFileSave}
+
+            >
+                <div className="p-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-bold text-gray-800">{fileName}</h2>
+                        <div className="flex items-center gap-2">
+                            {nullCount > 0 && (
+                                <div className="flex items-center text-amber-600 bg-amber-50 px-3 py-1 rounded-md">
+                                    <AlertTriangle size={16} className="mr-1" />
+                                    <span className="text-sm">{nullCount} empty cells</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="border rounded-lg overflow-hidden">
+                        <DataSheetGrid
+                            value={rowData}
+                            onChange={setRowData}
+                            columns={colDefs}
+                            className="w-full"
+                        />
+                    </div>
+
+                    {fileerror && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                            {fileerror}
                         </div>
                     )}
                 </div>
-        
-                <Modal isOpen={isModalOpen} onClose={closeModal} onSearchReplace={handleSearchReplace} onSave={handleFileSave}>
-                    <DataSheetGrid
-                        value={rowData}
-                        onChange={setRowData}
-                        columns={colDefs}
-                    />
-                    <p className='text-red-500 text-sm font-poppins'>Number of null values: {nullCount}</p>
-                    {fileerror && <p className='text-red-500 text-sm font-poppins'>{fileerror}</p>}
-                </Modal>
-                {isSearchReplaceOpen && (
-                    <Modal isOpen={isSearchReplaceOpen} onClose={() => setIsSearchReplaceOpen(false)} showSaveButton={false} showSearchReplaceButton={false} size="small">
-                        <form onSubmit={(e) => { e.preventDefault(); handleSearchReplaceSubmit(); }}>
-                            <h2 className='text-xl font-rowdies py-2'>Search and Replace</h2>
-                            <div className='mb-4'>
-                                <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='searchValue'>
-                                    Search Value
+            </Modal>
+
+            <Modal
+                isOpen={isSearchReplaceOpen}
+                onClose={() => setIsSearchReplaceOpen(false)}
+                showSaveButton={false}
+                showSearchReplaceButton={false}
+            >
+                <div className="p-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold flex items-center">
+                            <Search size={18} className="mr-2 text-gray-500" />
+                            Search & Replace
+                        </h2>
+                    </div>
+
+                    <form onSubmit={(e) => { e.preventDefault(); handleSearchReplaceSubmit(); }}>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-poppins text-gray-700 mb-1" htmlFor="searchValue">
+                                    Find
                                 </label>
                                 <input
-                                    id='searchValue'
-                                    type='text'
+                                    id="searchValue"
+                                    type="text"
                                     value={searchValue}
                                     onChange={(e) => setSearchValue(e.target.value)}
-                                    className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Text to find..."
                                     required
                                 />
                             </div>
-                            <div className='mb-4'>
-                                <label className='block text-gray-700 text-sm font-bold mb-2' htmlFor='replaceValue'>
-                                    Replace Value
+
+                            <div>
+                                <label className="block text-sm font-poppins text-gray-700 mb-1" htmlFor="replaceValue">
+                                    Replace with
                                 </label>
                                 <input
-                                    id='replaceValue'
-                                    type='text'
+                                    id="replaceValue"
+                                    type="text"
                                     value={replaceValue}
                                     onChange={(e) => setReplaceValue(e.target.value)}
-                                    className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Replacement text..."
                                     required
                                 />
                             </div>
-                            <div className='flex justify-end'>
-                                <button
-                                    type='submit'
-                                    className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl'
-                                >
-                                    Replace
-                                </button>
-                            </div>
-                        </form>
-                    </Modal>
-                )}
-                <div className='flex flex-row justify-center items-center pt-5'>
-                    <div className='flex flex-row bg-white p-4 w-3/4 rounded-2xl border-2 border-black min-w-fit py-10'>
-                        <SheetIcon />
-                        <div className='flex flex-col w-3/4'>
-                            <label className='text-xl font-rowdies py-2'> In-App Data Entry Sheet </label>
-                            <div className='flex flex-row border-2 border-dotted border-gray-300 rounded-md p-2 justify-center gap-5'>
-                                <h1 className='text-l font-rowdies text-center'> Don't have <br />any data?</h1>
-                                <h1 className='text-l font-rowdies text-center'> Use Our In-App Data <br /> Entry Sheet</h1>
-                            </div>
                         </div>
-                        <div className='flex flex-col w-1/4 justify-center items-center'>
+
+                        <div className="mt-6 flex justify-end">
                             <button
-                                className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4'
-                                onClick={() => setIsColumnFormOpen(true)}
+                                type="button"
+                                onClick={() => setIsSearchReplaceOpen(false)}
+                                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg mr-2"
                             >
-                                Create Sheet
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                            >
+                                Replace All
                             </button>
                         </div>
-                    </div>
+                    </form>
                 </div>
-                {isColumnFormOpen && (
-                    <Modal isOpen={isColumnFormOpen} onClose={() => setIsColumnFormOpen(false)} showSaveButton={false} showSearchReplaceButton={false} size='medium' >
-                        <form onSubmit={handleColumnFormSubmit}>
-                            <h2 className='text-xl font-rowdies py-2'>Enter Column Names and Types</h2>
-                            {columnDefinitions.map((colDef, index) => (
-                                <div key={index} className='relative mb-2 flex flex-row gap-2 items-center'>
-                                    <input
-                                        type='text'
-                                        value={colDef.name}
-                                        pattern='[A-Za-z0-9 ]*'
-                                        required
-                                        onChange={(e) => {
-                                            const newColumnDefinitions = [...columnDefinitions];
-                                            newColumnDefinitions[index].name = e.target.value;
-                                            setColumnDefinitions(newColumnDefinitions);
-                                        }}
-                                        className='border-2 border-gray-300 rounded-md p-2 w-1/2'
-                                        placeholder={`Column ${index + 1}`}
-                                    />
+            </Modal>
+            {/* Column Form Modal */}
+            <Modal
+                isOpen={isColumnFormOpen}
+                onClose={() => setIsColumnFormOpen(false)}
+                showSaveButton={false}
+                showSearchReplaceButton={false}
+
+            >
+                <div className="p-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold flex items-center">
+                            <Plus size={18} className="mr-2 text-gray-500" />
+                            Create Data Sheet
+                        </h2>
+                    </div>
+
+                    <form onSubmit={handleColumnFormSubmit}>
+                        <div className="space-y-4">
+                            <p className="text-sm text-gray-600">
+                                Define your data columns and their types to create a blank sheet.
+                            </p>
+
+                            {columnDefinitions.map((column, index) => (
+                                <div key={index} className="flex gap-3">
+                                    <div className="flex-1">
+                                        <input
+                                            type="text"
+                                            value={column.name}
+                                            onChange={(e) => {
+                                                const newColumnDefinitions = [...columnDefinitions];
+                                                newColumnDefinitions[index].name = e.target.value;
+                                                setColumnDefinitions(newColumnDefinitions);
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Column name"
+                                            required
+                                        />
+                                    </div>
                                     <select
-                                        value={colDef.type}
+                                        value={column.type}
                                         onChange={(e) => {
                                             const newColumnDefinitions = [...columnDefinitions];
                                             newColumnDefinitions[index].type = e.target.value as 'text' | 'number' | 'percent' | 'date';
                                             setColumnDefinitions(newColumnDefinitions);
                                         }}
-                                        className='border-2 border-gray-300 rounded-md p-2 w-1/2 bg-blue-100'
+                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                        required
                                     >
                                         <option value="text">Text</option>
                                         <option value="number">Number</option>
-                                        <option value="percent">Percent</option>
+                                        <option value="percent">Percentage</option>
                                         <option value="date">Date</option>
                                     </select>
                                     <button
-                                        type='button'
+                                        type="button"
                                         onClick={() => {
                                             const newColumnDefinitions = columnDefinitions.filter((_, i) => i !== index);
                                             setColumnDefinitions(newColumnDefinitions);
                                         }}
-                                        className='text-red-500 ml-2'
+                                        className="p-2 text-gray-400 hover:text-red-500"
                                     >
-                                        &times;
+                                        <X size={18} />
                                     </button>
                                 </div>
                             ))}
-                            <div className='flex justify-end'>
-                                <button
-                                    type='button'
-                                    onClick={() => setColumnDefinitions([...columnDefinitions, { name: '', type: 'text' }])}
-                                    className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl'
-                                >
-                                    Add Column
-                                </button>
-                                <button
-                                    type='submit'
-                                    className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl'
-                                    disabled={columnDefinitions.length === 0}
-                                >
-                                    Create Sheet
-                                </button>
-                            </div>
-                        </form>
-                    </Modal>
-                )}
-                <div className='flex flex-row justify-center items-center pt-5'>
-                    <div className='flex flex-row bg-white p-4 w-3/4 rounded-2xl border-2 border-black min-w-fit py-10'>
-                        <StoreIcon />
-                        <div className='pl-3 flex flex-col w-3/4'>
-                            <label className='text-xl font-rowdies py-2'> E-commerce Platfrom Integration </label>
-                            <div className='flex flex-row border-2 border-dotted border-gray-300 rounded-md p-2 justify-center gap-5'>
-                                <h1 className='text-l font-rowdies text-center'> Have an <br />Ecommerce Store?</h1>
-                                <h1 className='text-l font-rowdies text-center'> Integrate With <br />VisuGrow Now!</h1>
-                            </div>
-                        </div>
-                        <div className='flex flex-col w-1/4 justify-center items-center'>
-                            <button className='customColorButton font-rowdies text-white text-l p-2 m-2 rounded-3xl w-3/4' 
-                            onClick={() => toast.error('Coming Soon!')}> Integerate </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
-}
 
-export default UploadDataPage
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setColumnDefinitions([...columnDefinitions, { name: '', type: 'text' }]);
+                                }}
+                                className="flex items-center text-blue-600 hover:text-blue-800 py-2"
+                            >
+                                <Plus size={16} className="mr-1" /> Add Column
+                            </button>
+                        </div>
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setIsColumnFormOpen(false)}
+                                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg mr-2"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={columnDefinitions.length === 0}
+                                className="px-4 py-2 bg-[#053252] text-white rounded-lg disabled:bg-blue-300"
+                            >
+                                Create Sheet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
+        </div>
+    );
+};
+
+export default UploadDataPage;

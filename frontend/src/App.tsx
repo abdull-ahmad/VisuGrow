@@ -1,19 +1,20 @@
-import { Navigate, Route, Routes } from "react-router-dom"
-import { Toaster } from "react-hot-toast"
-import RegisterPage from "./pages/Auth/RegisterPage"
-import LoginPage from "./pages/Auth/LoginPage"
-import ForgotPassword from "./pages/Auth/ForgotPassword"
-import ChangePassword from "./pages/Auth/ChangePassword"
-import VerifyEmail from "./pages/Auth/VerifyEmail"
-import UploadDataPage from "./pages/Data/UploadDataPage"
-import HomePage from "./pages/Main/HomePage"
-import LoadingSpinner from "./components/LoadingSpinner"
-import DashboardPage from "./pages/Dashboard/DashboardPage"
-import VisualizationPage from "./pages/Visualization/VisualizationPage"
-import { useAuthStore } from "./store/authStore"
-import { useEffect } from "react"
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+import RegisterPage from "./pages/Auth/RegisterPage";
+import LoginPage from "./pages/Auth/LoginPage";
+import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ChangePassword from "./pages/Auth/ChangePassword";
+import VerifyEmail from "./pages/Auth/VerifyEmail";
+import UploadDataPage from "./pages/Data/UploadDataPage";
+import HomePage from "./pages/Main/HomePage";
+import LoadingSpinner from "./components/LoadingSpinner";
+import DashboardPage from "./pages/Dashboard/DashboardPage";
+import VisualizationPage from "./pages/Visualization/VisualizationPage";
+import { useAuthStore } from "./store/authStore";
+
+const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -24,7 +25,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const RedirectAuthUser: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (isAuthenticated && user?.isVerified) {
     return <Navigate to="/" replace />;
@@ -32,7 +33,7 @@ const RedirectAuthUser: React.FC<{ children: React.ReactNode }> = ({ children })
   return <>{children}</>;
 };
 
-function App() {
+const App: React.FC = () => {
   const { isCheckingAuth, checkAuth } = useAuthStore();
 
   useEffect(() => {
@@ -43,64 +44,42 @@ function App() {
     return <LoadingSpinner />;
   }
 
+  const publicRoutes = [
+    { path: "/", element: <HomePage /> },
+    { path: "/register", element: <RegisterPage />, wrapper: AuthRedirect },
+    { path: "/login", element: <LoginPage />, wrapper: AuthRedirect },
+    { path: "/verify-email", element: <VerifyEmail />, wrapper: AuthRedirect },
+    { path: "/forgot", element: <ForgotPassword />, wrapper: AuthRedirect },
+    { path: "/reset-password/:token", element: <ChangePassword />, wrapper: AuthRedirect },
+  ];
+
+  const protectedRoutes = [
+    { path: "/upload", element: <UploadDataPage /> },
+    { path: "/dashboard", element: <DashboardPage /> },
+    { path: "/visualization", element: <VisualizationPage /> },
+  ];
+
   return (
     <div>
       <Routes>
-        <Route path="/" element=
-          {
-            <HomePage />
-          }
-        />
-        <Route path="/register" element={
-          <RedirectAuthUser>
-            <RegisterPage />
-          </RedirectAuthUser>
-        } />
-        <Route path="/login" element={
-          <RedirectAuthUser>
-            <LoginPage />
-          </RedirectAuthUser>
-        } />
-
-        <Route path="/verify-email" element={
-          <RedirectAuthUser>
-            <VerifyEmail />
-          </RedirectAuthUser>
-          
-        } />
-
-        <Route path="/forgot" element={
-          <RedirectAuthUser>
-            <ForgotPassword />
-          </RedirectAuthUser>
-        } />
-        <Route path="/reset-password/:token" element={
-          <RedirectAuthUser>
-            <ChangePassword />
-          </RedirectAuthUser>
-        } />
-
-        <Route path="/upload" element={
-          <ProtectedRoute>
-            <UploadDataPage />
-          </ProtectedRoute>
-        } />
-
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        } />
-
-        <Route path="/visualization" element={
-          <ProtectedRoute>
-            <VisualizationPage />
-          </ProtectedRoute>
-        } />
+        {publicRoutes.map(({ path, element, wrapper: Wrapper }) => (
+          <Route
+            key={path}
+            path={path}
+            element={Wrapper ? <Wrapper>{element}</Wrapper> : element}
+          />
+        ))}
+        {protectedRoutes.map(({ path, element }) => (
+          <Route
+            key={path}
+            path={path}
+            element={<RequireAuth>{element}</RequireAuth>}
+          />
+        ))}
       </Routes>
       <Toaster />
     </div>
   );
-}
+};
 
 export default App;

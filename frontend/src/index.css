@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Rowdies:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+.font-rowdies{
+    font-family: 'Rowdies', sans-serif;
+}
+
+.font-poppins{
+    font-family: 'Poppins', sans-serif;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -19,4 +30,16 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari and Opera */
 }

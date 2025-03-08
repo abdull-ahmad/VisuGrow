@@ -1,11 +1,12 @@
 import React from 'react';
 import html2canvas from 'html2canvas';
-import { ChartCanvasProps} from '../../types/Chart';
-import { ArrowDownToLine, CircleFadingPlus, Trash } from 'lucide-react';
+import { ChartCanvasProps } from '../../types/Chart';
+import { ArrowDownToLine, Trash, GripHorizontal, Plus, X } from 'lucide-react';
 import { SingleChart } from './SingleChart';
 import GridLayout from 'react-grid-layout';
 import '/node_modules/react-grid-layout/css/styles.css';
 import '/node_modules/react-resizable/css/styles.css';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const ChartCanvas: React.FC<ChartCanvasProps> = ({
   canvases,
@@ -17,16 +18,14 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
   onRemoveChart,
   onSelectChart
 }) => {
-
   const handleLayoutChange = (newLayout: GridLayout.Layout[]) => {
-    onLayoutChange(selectedCanvasId, newLayout); // Call parent handler
+    onLayoutChange(selectedCanvasId, newLayout);
   };
 
   const handleDownloadChart = async (chartId: string) => {
-    console.log(chartId);
     const element = document.getElementById(`chart-${chartId}`);
     if (element) {
-      const canvas = await html2canvas(element);
+      const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
       const link = document.createElement('a');
       link.download = `chart-${chartId}.png`;
       link.href = canvas.toDataURL();
@@ -35,36 +34,69 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
   };
 
   const handleDownloadCanvas = async (canvasId: string) => {
-    console.log("Downloading canvas with ID:", canvasId);
     const element = document.getElementById(`canvas-${canvasId}`);
     if (element) {
-      const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
-      const link = document.createElement('a');
-      link.download = `canvas-${canvasId}.png`;
-      link.href = canvas.toDataURL();
-      link.click();
+      try {
+        // Show loading indicator
+        const loadingEl = document.createElement('div');
+        loadingEl.className = 'fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50';
+        loadingEl.innerHTML = '<div class="bg-white p-4 rounded-lg shadow-lg">Generating image...</div>';
+        document.body.appendChild(loadingEl);
+        
+        const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
+        const link = document.createElement('a');
+        link.download = `canvas-${canvasId}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        // Remove loading indicator
+        document.body.removeChild(loadingEl);
+      } catch (error) {
+        console.error("Error generating canvas image:", error);
+      }
     } else {
       console.error("Canvas element not found:", canvasId);
     }
   };
 
+  const selectedCanvas = canvases.find(canvas => canvas.id === selectedCanvasId);
+
   return (
-    <div className="w-full h-full overflow-hidden flex flex-col">
-      <div className="flex-1 relative">
+    <div className="w-full h-full flex flex-col bg-gray-50">
+      {/* Header with current canvas name */}
+      <div className="bg-white border-b shadow-sm px-6 py-4 flex items-center justify-between">
+        <h1 className="text-xl font-poppins text-gray-800">
+          {selectedCanvas?.name || 'Canvas'}
+        </h1>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => handleDownloadCanvas(selectedCanvasId)}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <ArrowDownToLine size={16} /> Export
+          </button>
+        </div>
+      </div>
+      
+      {/* Main content area */}
+      <div className="flex-1 relative overflow-hidden">
         <div className="absolute inset-0">
           {canvases
             .filter(canvas => canvas.id === selectedCanvasId)
             .map(canvas => (
-              <div key={canvas.id} id={`canvas-${canvas.id}`}
-                className="custom-scrollbar bg-white shadow-sm rounded-lg"
+              <motion.div 
+                key={canvas.id} 
+                id={`canvas-${canvas.id}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="bg-white shadow-sm rounded-lg mx-6 my-4"
                 style={{
-                  width: 'full',
-                  height: 'calc(100vh - 11.5rem)',
+                  height: '65vh',
                   overflow: 'auto'
                 }}
               >
                 <GridLayout
-                  className="layout bg-white"
+                  className="layout"
                   layout={canvas.layout}
                   cols={12}
                   rowHeight={30}
@@ -73,6 +105,7 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
                   draggableHandle=".drag-handle"
                   isResizable={true}
                   isDraggable={true}
+                  margin={[16, 16]}
                 >
                   {canvas.charts.map(chart => (
                     <div
@@ -80,6 +113,7 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
                       data-grid={(canvas.layout && canvas.layout.find(l => l.i === chart.id)) || {
                         x: 0, y: 0, w: 4, h: 6
                       }}
+                     
                     >
                       <SingleChart
                         key={chart.id}
@@ -88,67 +122,13 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
                         onDelete={() => onRemoveChart(chart.id)}
                         onDownload={() => handleDownloadChart(chart.id)}
                       />
-                      <div className="drag-handle" style={{
-                        position: 'absolute',
-                        top: 5,
-                        left: 5,
-                        cursor: 'move',
-                        padding: '2px 5px',
-                        borderRadius: 3
-                      }}> ⠿
-                      </div>
                     </div>
                   ))}
                 </GridLayout>
-              </div>
+              </motion.div>
             ))}
         </div>
-      </div>
-
-      <div className="flex flex-row w-full items-center gap-4 p-4 border-b fixed bottom-0">
-        <button
-          onClick={onAddCanvas}
-          className="px-4 py-2 customColorButton text-white rounded-md"
-        >
-          <CircleFadingPlus/>
-        </button>
-        <div className="flex gap-2 overflow-auto">
-          {canvases.map(canvas => (
-            <button
-              key={canvas.id}
-              onClick={() => onCanvasSelect(canvas.id)}
-              className={`px-2 py-1 text-white font-poppins rounded-md ${canvas.id === selectedCanvasId
-                ? 'customColorButton'
-                : 'bg-custom hover:bg-gray-300'
-                }`}
-            >
-              {canvas.name}
-              <div className="ml-2 inline-flex gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDownloadCanvas(canvas.id);
-                  }}
-                  className="text-xs hover:text-blue-600"
-                >
-                  <ArrowDownToLine />
-                </button>
-                {canvases.length > 1 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteCanvas(canvas.id);
-                    }}
-                    className="text-sm hover:text-red-600"
-                  >
-                    <Trash />
-                  </button>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
+      </div>      
     </div>
   );
 }

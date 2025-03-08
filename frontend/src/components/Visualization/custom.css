@@ -1,14 +1,36 @@
-/* Grid lines background */
-.react-grid-layout {
-    background-image: linear-gradient(to right, #f0f0f0 1px, transparent 1px),
-        linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
-    background-size: 30px 30px;
-    /* Adjust grid spacing */
+/* Recharts Styling */
+.recharts-wrapper {
+    width: 100% !important;
+    height: 100% !important;
 }
 
-/* Chart container styling */
-.chart-container {
-    background: white;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.recharts-surface {
+    overflow: visible;
+}
+
+.recharts-cartesian-axis-tick-value {
+    font-size: 0.8rem;
+}
+
+.recharts-legend-item {
+    font-size: 0.9rem;
+}
+
+.recharts-tooltip {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.recharts-x-axis .recharts-cartesian-axis-tick {
+    font-size: 12px;
+}
+
+.recharts-bar-rectangle {
+    transition: fill 0.2s ease;
+}
+
+.recharts-tooltip-wrapper {
+    z-index: 100;
 }

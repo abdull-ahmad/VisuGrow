@@ -8,7 +8,6 @@ export function groupDataByTimeScale(data: { primary: Date; secondary: number }[
         const existing = grouped.get(key);
 
         if (existing) {
-            // Aggregate values (example: sum)
             existing.secondary += point.secondary;
         } else {
             grouped.set(key, {
@@ -22,10 +21,21 @@ export function groupDataByTimeScale(data: { primary: Date; secondary: number }[
 }
 
 function getTimeScaleKey(date: Date, scale: TimeScale) {
+    // Add safety check
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+        console.error('Invalid date provided:', date);
+        return 'invalid-date';
+    }
     switch (scale) {
         case 'year': return date.getFullYear().toString();
         case 'month': return `${date.getFullYear()}-${date.getMonth()}`;
-        case 'week': return `${date.getFullYear()}-W${Math.ceil(date.getDate() / 7)}`;
+        case 'week': {
+            const year = date.getFullYear();
+            const firstDayOfYear = new Date(year, 0, 1);
+            const pastDays = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+            const week = Math.ceil((pastDays + firstDayOfYear.getDay() + 1) / 7);
+            return `${year}-W${week.toString().padStart(2, '0')}`;
+        }
         case 'day': return date.toISOString().split('T')[0];
         default: return date.getFullYear().toString();
     }
@@ -36,12 +46,17 @@ function getScaleStartDate(date: Date, scale: TimeScale) {
     switch (scale) {
         case 'year': return new Date(date.getFullYear(), 0, 1);
         case 'month': return new Date(date.getFullYear(), date.getMonth(), 1);
-        case 'week': return new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+        case 'week': {
+            const day = date.getDay(); // Sunday = 0
+            const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday start
+            return new Date(date.setDate(diff));
+        }
         default: return date;
     }
 }
 
 export function formatDateByScale(date: Date, scale: TimeScale): string {
+
     if (!date || isNaN(date.getTime())) {
         return '';
     }
