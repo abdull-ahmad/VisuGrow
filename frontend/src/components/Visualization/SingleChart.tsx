@@ -49,10 +49,10 @@ export const SingleChart: React.FC<{
 
         return (
             <g>
-                <text x={cx} y={cy} dy={-20} textAnchor="middle" fill={fill} className="font-medium text-sm">
+                <text x={cx} y={cy} dy={-20} textAnchor="middle" fill={fill} className="font-poppins text-sm">
                     {payload.name}
                 </text>
-                <text x={cx} y={cy} dy={8} textAnchor="middle" fill="#333" className="font-bold">
+                <text x={cx} y={cy} dy={8} textAnchor="middle" fill="#333" className="font-rowdies">
                     {`${value}`}
                 </text>
                 <text x={cx} y={cy} dy={25} textAnchor="middle" fill="#666" className="text-xs">

@@ -53,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isLoading, error, handleLogout }) => 
             {/* Logo area */}
             <div className={`flex items-center justify-center py-6 border-b border-gray-700 ${collapsed ? 'px-2' : 'px-6'}`}>
                 {collapsed ? (
-                    <div className="rounded-full flex items-center justify-center font-bold text-xl">
+                    <div className="rounded-full flex items-center justify-center font-rowdies text-xl">
                         <img src="./mark.png" alt=""/>
                     </div>
                 ) : (
