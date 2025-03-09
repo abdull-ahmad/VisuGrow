@@ -28,7 +28,6 @@ export interface ChartConfig {
   color?: string;
   dateFilterType?: 'year' | 'month' | 'week' | 'day';
   numberFilterType?: 'increasing' | 'decreasing' ;
-  
 }
 
 export interface CanvasConfig {
