@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDataStore } from '../../store/dataStore';
-import { ChartConfig, VisualizationPanelProps } from '../../types/Chart';
+import { ChartConfig, VisualizationPanelProps } from '../../types/visualization';
 import {
   ChartArea, ChartBar, ChartLine, ChartPie,
   Cone, Radar, Radiation, Trash2, Plus,

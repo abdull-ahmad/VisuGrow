@@ -1,20 +1,18 @@
 import React from 'react';
 import html2canvas from 'html2canvas';
-import { ChartCanvasProps } from '../../types/Chart';
-import { ArrowDownToLine, Trash, GripHorizontal, Plus, X } from 'lucide-react';
+import { ChartCanvasProps } from '../../types/visualization';
+import { ArrowDownToLine } from 'lucide-react';
 import { SingleChart } from './SingleChart';
 import GridLayout from 'react-grid-layout';
 import '/node_modules/react-grid-layout/css/styles.css';
 import '/node_modules/react-resizable/css/styles.css';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export const ChartCanvas: React.FC<ChartCanvasProps> = ({
   canvases,
   selectedCanvasId,
   onLayoutChange,
-  onCanvasSelect,
-  onDeleteCanvas,
-  onAddCanvas,
+  
   onRemoveChart,
   onSelectChart
 }) => {

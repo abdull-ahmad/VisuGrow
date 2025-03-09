@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Sidebar from '../../components/SideBar';
 import { useAuthStore } from '../../store/authStore';
+import { useVisualizationStore } from '../../store/visualizationStore';
 import { ChartCanvas } from '../../components/Visualization/ChartCanvas';
 import { FilePanel } from '../../components/Visualization/FilePanel';
 import { VisualizationPanel } from '../../components/Visualization/VisualizationPanel';
-import GridLayout from 'react-grid-layout';
-import { CanvasConfig, ChartConfig } from '../../types/Chart';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   PlusCircle, 
@@ -19,97 +18,39 @@ import {
   Check
 } from 'lucide-react';
 import '../../index.css';
+import { useState } from 'react';
 
 const VisualizationPage = () => {
   const { logout } = useAuthStore();
-  const [canvases, setCanvases] = useState<CanvasConfig[]>([{
-    id: 'default',
-    name: 'Main Canvas',
-    charts: [],
-    layout: [] // Initialize empty layout
-  }]);
-  const [selectedCanvasId, setSelectedCanvasId] = useState<string>('default');
-  const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
-  const [activeRightTab, setActiveRightTab] = useState<'data' | 'visualize'>('data');
-  
-
-  const handleLayoutChange = (canvasId: string, newLayout: GridLayout.Layout[]) => {
-    setCanvases(prev => prev.map(canvas =>
-      canvas.id === canvasId
-        ? { ...canvas, layout: newLayout }
-        : canvas
-    ));
-  };
   const [showCanvasSelector, setShowCanvasSelector] = useState(false);
-
-  // Canvas operations
-  const addCanvas = () => {
-    const newCanvas: CanvasConfig = {
-      id: Date.now().toString(),
-      name: `Canvas ${canvases.length + 1}`,
-      charts: [],
-      layout: [] 
-    };
-    setCanvases(prev => [...prev, newCanvas]);
-    setSelectedCanvasId(newCanvas.id);
-  };
-
-  const deleteCanvas = (canvasId: string) => {
-    if (canvases.length <= 1) return; // Prevent deleting last canvas
-    setCanvases(prev => prev.filter(c => c.id !== canvasId));
-    if (selectedCanvasId === canvasId) {
-      setSelectedCanvasId(canvases[0].id); // Switch to first canvas
-    }
-  };
-
-  // Chart operations
-  const addChart = (chart: ChartConfig) => {
-    setCanvases(prev => prev.map(canvas =>
-      canvas.id === selectedCanvasId
-        ? { ...canvas, charts: [...canvas.charts, chart] }
-        : canvas
-    ));
-    setSelectedChartId(chart.id);
-  };
-
-  const updateChart = (id: string, updatedChart: Partial<ChartConfig>) => {
-    setCanvases(prev => prev.map(canvas =>
-      canvas.id === selectedCanvasId
-        ? {
-          ...canvas,
-          charts: canvas.charts.map(chart =>
-            chart.id === id ? { ...chart, ...updatedChart } : chart
-          )
-        }
-        : canvas
-    ));
-  };
-
-  const removeChart = (id: string) => {
-    setCanvases(prev => prev.map(canvas =>
-      canvas.id === selectedCanvasId
-        ? {
-          ...canvas,
-          charts: canvas.charts.filter(chart => chart.id !== id),
-          layout: canvas.layout?.filter(l => l.i !== id) || []
-        }
-        : canvas
-    ));
-
-    if (selectedChartId === id) {
-      setSelectedChartId(null);
-    }
-  };
+  
+  // Use the visualization store instead of local state
+  const {
+    canvases,
+    selectedCanvasId,
+    selectedChartId,
+    rightPanelCollapsed,
+    activeRightTab,
+    addCanvas,
+    deleteCanvas,
+    setSelectedCanvasId,
+    addChart,
+    updateChart,
+    removeChart,
+    setSelectedChartId,
+    handleLayoutChange,
+    toggleRightPanel,
+    setActiveRightTab
+  } = useVisualizationStore();
 
   const selectedCanvas = canvases.find(c => c.id === selectedCanvasId);
   
   // Auto-expand panel when a chart is selected
   useEffect(() => {
     if (selectedChartId && rightPanelCollapsed) {
-      setRightPanelCollapsed(false);
+      toggleRightPanel();
     }
-  }, [selectedChartId]);
+  }, [selectedChartId, rightPanelCollapsed]);
 
   return (
     <div className="flex flex-row h-screen bg-[#4a8cbb1b] overflow-hidden">
@@ -126,7 +67,7 @@ const VisualizationPage = () => {
             
             <div className="flex items-center space-x-3">
               <button 
-                onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+                onClick={toggleRightPanel}
                 className={`p-2 rounded-md ${!rightPanelCollapsed ? 'bg-[#053252] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}
                 title={rightPanelCollapsed ? "Open Panel" : "Close Panel"}
               >

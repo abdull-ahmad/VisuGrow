@@ -1,4 +1,4 @@
-import { TimeScale } from '../types/Chart';
+import { TimeScale } from '../types/visualization';
 
 export function groupDataByTimeScale(data: { primary: Date; secondary: number }[], scale: TimeScale) {
     const grouped = new Map<string, { primary: Date; secondary: number }>();

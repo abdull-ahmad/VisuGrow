@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { AuthState } from '../types/auth';
+import { useDataStore } from './dataStore';
+import { useVisualizationStore } from './visualizationStore';
 
 const API_URL = 'http://localhost:5000/api/auth';
 
@@ -55,7 +57,10 @@ export const useAuthStore = create<AuthState>((set) => ({
 		set({ isLoading: true, error: null });
 		try {
 			await axios.post(`${API_URL}/logout`);
-			set({ user: null, isAuthenticated: false , error: null, isLoading: false });
+            set({ user: null, isAuthenticated: false , error: null, isLoading: false });
+			useDataStore.getState().resetStore();
+            useVisualizationStore.getState().resetStore();
+            
 		} catch (error) {
 			set({ error: "Error logging out", isLoading: false });
 			throw error;

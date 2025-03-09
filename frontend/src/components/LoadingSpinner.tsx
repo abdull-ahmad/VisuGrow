@@ -42,7 +42,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ message = "Loading..." 
           <img 
             src="/Logo.png" 
             alt="VisuGrow" 
-            className="h-10 w-auto"
+            className="object-fit"
           />
         </div>
       </div>

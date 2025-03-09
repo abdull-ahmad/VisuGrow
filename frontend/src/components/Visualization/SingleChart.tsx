@@ -13,9 +13,9 @@ import {
     Download,
     GripHorizontal
 } from 'lucide-react';
-import { TimeScale } from '../../types/Chart';
+import { TimeScale } from '../../types/visualization';
 import { groupDataByTimeScale, formatDateByScale } from '../../utils/dateScaler';
-import { ChartConfig } from '../../types/Chart';
+import { ChartConfig } from '../../types/visualization';
 import '/node_modules/react-grid-layout/css/styles.css';
 import '/node_modules/react-resizable/css/styles.css';
 import Tippy from '@tippyjs/react';

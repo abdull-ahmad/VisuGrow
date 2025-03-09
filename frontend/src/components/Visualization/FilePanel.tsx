@@ -4,10 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, ChevronDown, Database, Upload, Inbox } from 'lucide-react';
 
 export const FilePanel: React.FC = () => {
-  const { files, viewFile, fileFields } = useDataStore();
-  const [selectedFileId, setSelectedFileId] = useState('');
+  const { 
+    files, 
+    viewFile, 
+    fileFields, 
+    selectedFileId, 
+    setSelectedFileId, 
+    isFileLoading 
+  } = useDataStore();
+  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     viewFile().catch(console.error);
@@ -20,13 +26,10 @@ export const FilePanel: React.FC = () => {
 
   const handleFileOpen = async () => {
     if (selectedFileId) {
-      setIsLoading(true);
       try {
         await fileFields(selectedFileId);
       } catch (error) {
         console.error(error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -103,14 +106,14 @@ export const FilePanel: React.FC = () => {
             
             <motion.button 
               onClick={handleFileOpen} 
-              disabled={!selectedFileId || isLoading}
+              disabled={!selectedFileId || isFileLoading}
               whileHover={{ scale: selectedFileId ? 1.02 : 1 }}
               whileTap={{ scale: selectedFileId ? 0.98 : 1 }}
               className={`w-full py-3 px-4 flex items-center justify-center rounded-lg text-white font-medium transition-all ${
                 !selectedFileId ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#053252] hover:bg-[#0a4470] shadow-md hover:shadow-lg'
               }`}
             >
-              {isLoading ? (
+              {isFileLoading ? (
                 <div className="flex items-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

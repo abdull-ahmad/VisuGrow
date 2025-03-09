@@ -1,4 +1,4 @@
-import GridLayout from 'react-grid-layout';
+import GridLayout , {  Layout } from 'react-grid-layout';
 
 export interface ChartCanvasProps {
   canvases: CanvasConfig[];
@@ -35,4 +35,36 @@ export interface CanvasConfig {
   name: string;
   charts: ChartConfig[];
   layout?: GridLayout.Layout[];
+}
+
+export interface VisualizationState {
+  // Canvas state
+  canvases: CanvasConfig[];
+  selectedCanvasId: string;
+  selectedChartId: string | null;
+  
+  // UI state
+  rightPanelCollapsed: boolean;
+  activeRightTab: 'data' | 'visualize';
+  
+  // Canvas operations
+  addCanvas: () => void;
+  deleteCanvas: (canvasId: string) => void;
+  setSelectedCanvasId: (id: string) => void;
+  
+  // Chart operations
+  addChart: (chart: ChartConfig) => void;
+  updateChart: (id: string, updatedChart: Partial<ChartConfig>) => void;
+  removeChart: (id: string) => void;
+  setSelectedChartId: (id: string | null) => void;
+  
+  // Layout operations
+  handleLayoutChange: (canvasId: string, newLayout: Layout[]) => void;
+  
+  // UI operations
+  toggleRightPanel: () => void;
+  setActiveRightTab: (tab: 'data' | 'visualize') => void;
+
+  // reset store
+  resetStore: () => void;
 }
