@@ -20,9 +20,11 @@ export interface VisualizationPanelProps {
 
 export type TimeScale = 'year' | 'month' | 'week' | 'day';
 
+export type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'radar' | 'radial' | 'funnel';
+
 export interface ChartConfig {
   id: string;
-  chartType: 'bar' | 'line' | 'area' | 'pie' | 'radar' | 'radial' | 'funnel';
+  chartType: ChartType;
   xParameter: string;
   yParameter: string;
   color?: string;
@@ -35,6 +37,24 @@ export interface CanvasConfig {
   name: string;
   charts: ChartConfig[];
   layout?: GridLayout.Layout[];
+}
+
+export interface ChartDataItem {
+    primary: any;
+    secondary: number;
+}
+
+export interface PieChartDataItem {
+    name: string;
+    value: number;
+    fill: string;
+}
+
+export interface SingleChartProps {
+    chart: ChartConfig;
+    onSelect: () => void;
+    onDelete: () => void;
+    onDownload: () => void;
 }
 
 export interface VisualizationState {
