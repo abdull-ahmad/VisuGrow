@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Binoculars, X, Save, Database, Search } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Binoculars, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ModalProps {
@@ -12,25 +12,20 @@ interface ModalProps {
   onSearchReplace?: () => void;
   size?: 'small' | 'medium' | 'large';
   title?: string;
-  enableRAGTab?: boolean;
-  fileName?: string | null;
 }
 
 const Modal: React.FC<ModalProps> = ({ 
   isOpen, 
   onClose, 
-  onSave, 
-  children, 
-  showSaveButton = true,
   showSearchReplaceButton = true,
   onSearchReplace,
   size = 'large',
   title,
-  enableRAGTab = false,
-  fileName = null
+  children,
+  onSave,
+  showSaveButton = true,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState('data');
   
   // Close on escape key
   useEffect(() => {
@@ -94,53 +89,18 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         </div>
         
-        {/* Tabs - Only show if RAG is enabled */}
-        {enableRAGTab && (
-          <div className="flex border-b border-gray-200">
-            <button
-              className={`px-4 py-3 font-medium text-sm flex items-center ${
-                activeTab === 'data' 
-                  ? 'text-[#053252] border-b-2 border-[#053252]' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('data')}
-            >
-              <Database size={16} className="mr-2" />
-              View & Edit Data
-            </button>
-            <button
-              className={`px-4 py-3 font-medium text-sm flex items-center ${
-                activeTab === 'query' 
-                  ? 'text-[#053252] border-b-2 border-[#053252]' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('query')}
-            >
-              <Search size={16} className="mr-2" />
-              Query Data
-            </button>
-          </div>
-        )}
-        
-        {/* Content area */}
+        {/* Modal content area - this was missing */}
         <div className="flex-1 overflow-auto">
-          {activeTab === 'data' || !enableRAGTab ? (
-            children
-          ) : (
-            <React.Suspense fallback={<div className="p-6">Loading query interface...</div>}>
-              <RAGQueryPanel fileName={fileName} />
-            </React.Suspense>
-          )}
+          {children}
         </div>
         
-        {/* Footer with save button - Only show in data tab */}
-        {showSaveButton && (activeTab === 'data' || !enableRAGTab) && (
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 flex justify-end">
-            <button 
-              className="bg-[#053252] font-medium text-white text-sm px-6 py-2.5 rounded-lg flex items-center hover:bg-opacity-90 transition-colors shadow-sm"
+        {/* Footer with save button if needed */}
+        {showSaveButton && onSave && (
+          <div className="border-t border-gray-200 px-6 py-3 bg-gray-50 flex justify-end">
+            <button
               onClick={onSave}
+              className="px-4 py-2 bg-[#053252] text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <Save size={18} className="mr-2" />
               Save Changes
             </button>
           </div>

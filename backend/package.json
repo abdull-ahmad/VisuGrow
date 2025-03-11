@@ -19,7 +19,6 @@
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/multer": "^1.4.12",
     "@types/nodemailer": "^6.4.15",
     "nodemon": "^3.1.4",
     "ts-node": "^10.9.2",
@@ -27,7 +26,6 @@
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
-    "cloudinary": "^2.4.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -38,7 +36,6 @@
     "jsonwebtoken": "^9.0.2",
     "mailtrap": "^3.4.0",
     "mongoose": "^8.5.4",
-    "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.14"
   }
 }

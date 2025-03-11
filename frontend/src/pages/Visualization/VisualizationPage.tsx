@@ -6,9 +6,9 @@ import { ChartCanvas } from '../../components/Visualization/ChartCanvas';
 import { FilePanel } from '../../components/Visualization/FilePanel';
 import { VisualizationPanel } from '../../components/Visualization/VisualizationPanel';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  PlusCircle, 
-  PanelRight, 
+import {
+  PlusCircle,
+  PanelRight,
   PanelLeft,
   Layers,
   BarChart3,
@@ -23,7 +23,7 @@ import { useState } from 'react';
 const VisualizationPage = () => {
   const { logout } = useAuthStore();
   const [showCanvasSelector, setShowCanvasSelector] = useState(false);
-  
+
   // Use the visualization store instead of local state
   const {
     canvases,
@@ -40,17 +40,21 @@ const VisualizationPage = () => {
     setSelectedChartId,
     handleLayoutChange,
     toggleRightPanel,
-    setActiveRightTab
+    setActiveRightTab,
+    addTextBox,
+    updateTextBox,
+    removeTextBox,
   } = useVisualizationStore();
 
   const selectedCanvas = canvases.find(c => c.id === selectedCanvasId);
-  
+
   // Auto-expand panel when a chart is selected
   useEffect(() => {
     if (selectedChartId && rightPanelCollapsed) {
       toggleRightPanel();
     }
   }, [selectedChartId, rightPanelCollapsed]);
+
 
   return (
     <div className="flex flex-row h-screen bg-[#4a8cbb1b] overflow-hidden">
@@ -64,9 +68,9 @@ const VisualizationPage = () => {
               <h1 className="text-3xl font-rowdies text-gray-800">Visualization Studio</h1>
               <p className="text-gray-500 mt-1 font-poppins">Create and customize interactive data visualizations</p>
             </div>
-            
+
             <div className="flex items-center space-x-3">
-              <button 
+              <button
                 onClick={toggleRightPanel}
                 className={`p-2 rounded-md ${!rightPanelCollapsed ? 'bg-[#053252] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition-colors`}
                 title={rightPanelCollapsed ? "Open Panel" : "Close Panel"}
@@ -76,11 +80,11 @@ const VisualizationPage = () => {
             </div>
           </div>
         </header>
-        
+
         {/* Canvas Section */}
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 relative">
-            <motion.div 
+            <motion.div
               className="absolute inset-0 flex flex-col"
               transition={{ duration: 0.3 }}
             >
@@ -88,7 +92,7 @@ const VisualizationPage = () => {
               <div className="flex items-center justify-between px-6 py-3 bg-gray-50 border-b border-gray-200">
                 {/* Canvas Selector with Dropdown */}
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => setShowCanvasSelector(!showCanvasSelector)}
                     className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
                   >
@@ -98,19 +102,18 @@ const VisualizationPage = () => {
                     </h2>
                     <ChevronDown size={16} className="text-gray-500" />
                   </button>
-                  
+
                   {/* Canvas Selector Dropdown */}
                   {showCanvasSelector && (
                     <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 z-10">
                       <div className="py-1 max-h-64 overflow-y-auto">
                         {canvases.map(canvas => (
-                          <div 
+                          <div
                             key={canvas.id}
-                            className={`flex items-center justify-between px-4 py-2 hover:bg-gray-50 cursor-pointer ${
-                              selectedCanvasId === canvas.id ? 'bg-blue-50' : ''
-                            }`}
+                            className={`flex items-center justify-between px-4 py-2 hover:bg-gray-50 cursor-pointer ${selectedCanvasId === canvas.id ? 'bg-blue-50' : ''
+                              }`}
                           >
-                            <div 
+                            <div
                               className="flex-1"
                               onClick={() => {
                                 setSelectedCanvasId(canvas.id);
@@ -139,9 +142,9 @@ const VisualizationPage = () => {
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="border-t border-gray-100 px-4 py-2">
-                        <button 
+                        <button
                           onClick={() => {
                             addCanvas();
                             setShowCanvasSelector(false);
@@ -166,15 +169,18 @@ const VisualizationPage = () => {
                   onRemoveChart={removeChart}
                   onDeleteCanvas={deleteCanvas}
                   onSelectChart={setSelectedChartId}
+                  onAddTextBox={addTextBox}
+                  onUpdateTextBox={updateTextBox}
+                  onRemoveTextBox={removeTextBox}
                 />
               </div>
             </motion.div>
           </div>
-          
+
           {/* Right Panel - Data & Visualization Controls */}
           <AnimatePresence>
             {!rightPanelCollapsed && (
-              <motion.div 
+              <motion.div
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: 320, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
@@ -185,32 +191,30 @@ const VisualizationPage = () => {
                 <div className="flex border-b border-gray-200">
                   <button
                     onClick={() => setActiveRightTab('data')}
-                    className={`flex-1 flex items-center justify-center py-3 px-4 text-sm font-poppins relative ${
-                      activeRightTab === 'data' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    className={`flex-1 flex items-center justify-center py-3 px-4 text-sm font-poppins relative ${activeRightTab === 'data' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+                      }`}
                   >
                     <Database size={16} className="mr-2" />
                     Data Sources
-                    
+
                     {activeRightTab === 'data' && (
-                      <motion.div 
+                      <motion.div
                         className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
                         layoutId="tabIndicator"
                       />
                     )}
                   </button>
-                  
+
                   <button
                     onClick={() => setActiveRightTab('visualize')}
-                    className={`flex-1 flex items-center justify-center py-3 px-4 text-sm font-poppins relative ${
-                      activeRightTab === 'visualize' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    className={`flex-1 flex items-center justify-center py-3 px-4 text-sm font-poppins relative ${activeRightTab === 'visualize' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
+                      }`}
                   >
                     <BarChart3 size={16} className="mr-2" />
                     Visualize
-                    
+
                     {activeRightTab === 'visualize' && (
-                      <motion.div 
+                      <motion.div
                         className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
                         layoutId="tabIndicator"
                       />
@@ -225,7 +229,7 @@ const VisualizationPage = () => {
                       <FilePanel />
                     </div>
                   )}
-                  
+
                   {activeRightTab === 'visualize' && selectedCanvas && (
                     <div className="p-4">
                       <VisualizationPanel

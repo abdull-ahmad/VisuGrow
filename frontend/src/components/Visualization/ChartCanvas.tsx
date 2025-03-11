@@ -1,23 +1,61 @@
 import React from 'react';
 import html2canvas from 'html2canvas';
 import { ChartCanvasProps } from '../../types/visualization';
-import { ArrowDownToLine } from 'lucide-react';
+import { ArrowDownToLine, Type } from 'lucide-react';
 import { SingleChart } from './SingleChart';
 import GridLayout from 'react-grid-layout';
 import '/node_modules/react-grid-layout/css/styles.css';
 import '/node_modules/react-resizable/css/styles.css';
 import { motion } from 'framer-motion';
+import { TextBox } from '../TextBox';
+import { TextBoxItem } from '../../types/visualization';
+import { v4 as uuidv4 } from 'uuid'; 
 
 export const ChartCanvas: React.FC<ChartCanvasProps> = ({
   canvases,
   selectedCanvasId,
   onLayoutChange,
-  
   onRemoveChart,
-  onSelectChart
+  onSelectChart,
+  onAddTextBox,
+  onUpdateTextBox,
+  onRemoveTextBox
+
 }) => {
   const handleLayoutChange = (newLayout: GridLayout.Layout[]) => {
     onLayoutChange(selectedCanvasId, newLayout);
+  };
+
+  const handleAddTextBox = () => {
+    if (typeof onAddTextBox === 'function') {
+      const newTextBox: TextBoxItem = {
+        id: uuidv4(),
+        type: 'textbox',
+        content: ''
+      };
+      console.log('Adding new text box:', newTextBox);
+      onAddTextBox(selectedCanvasId, newTextBox);
+    } else {
+      console.error('onAddTextBox function is not provided');
+    }
+  };
+
+  // Handle text box content changes
+  const handleTextBoxContentChange = (textBoxId: string, content: string) => {
+    if (typeof onUpdateTextBox === 'function') {
+      onUpdateTextBox(selectedCanvasId, textBoxId, { content });
+    } else {
+      console.error('onUpdateTextBox function is not provided');
+    }
+  };
+
+  // Handle text box deletion
+  const handleRemoveTextBox = (textBoxId: string) => {
+    if (typeof onRemoveTextBox === 'function') {
+      onRemoveTextBox(selectedCanvasId, textBoxId);
+    } else {
+      console.error('onRemoveTextBox function is not provided');
+    }
   };
 
   const handleDownloadChart = async (chartId: string) => {
@@ -41,11 +79,48 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
         loadingEl.innerHTML = '<div class="bg-white p-4 rounded-lg shadow-lg">Generating image...</div>';
         document.body.appendChild(loadingEl);
         
-        const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
+        // Get the original scroll positions
+        const containerEl = element.parentElement;
+        const originalScrollTop = containerEl?.scrollTop || 0;
+        const originalScrollLeft = containerEl?.scrollLeft || 0;
+        
+        // Set options to capture full content
+        const options = {
+          useCORS: true,
+          scale: 2,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight,
+          width: element.scrollWidth,
+          height: element.scrollHeight,
+          onclone: (clonedDoc: Document) => {
+            // Find the cloned element
+            const clonedElement = clonedDoc.getElementById(`canvas-${canvasId}`);
+            if (clonedElement) {
+              // Ensure cloned element and its containers have full dimensions visible
+              clonedElement.style.overflow = 'visible';
+              if (clonedElement.parentElement) {
+                clonedElement.parentElement.style.overflow = 'visible';
+                clonedElement.parentElement.style.height = 'auto';
+              }
+            }
+          }
+        };
+        
+        const canvas = await html2canvas(element, options);
+        
+        // Create and trigger download
         const link = document.createElement('a');
         link.download = `canvas-${canvasId}.png`;
-        link.href = canvas.toDataURL();
+        link.href = canvas.toDataURL('image/png');
         link.click();
+        
+        // Restore scroll positions
+        if (containerEl) {
+          containerEl.scrollTop = originalScrollTop;
+          containerEl.scrollLeft = originalScrollLeft;
+        }
         
         // Remove loading indicator
         document.body.removeChild(loadingEl);
@@ -67,6 +142,12 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
           {selectedCanvas?.name || 'Canvas'}
         </h1>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={handleAddTextBox}
+            className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <Type size={16} /> Add Text
+          </button>
           <button 
             onClick={() => handleDownloadCanvas(selectedCanvasId)}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-100 rounded-md transition-colors"
@@ -105,13 +186,13 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
                   isDraggable={true}
                   margin={[16, 16]}
                 >
+                  {/* Render charts */}
                   {canvas.charts.map(chart => (
                     <div
                       key={chart.id}
                       data-grid={(canvas.layout && canvas.layout.find(l => l.i === chart.id)) || {
                         x: 0, y: 0, w: 4, h: 6
                       }}
-                     
                     >
                       <SingleChart
                         key={chart.id}
@@ -119,6 +200,23 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
                         onSelect={() => onSelectChart(chart.id)}
                         onDelete={() => onRemoveChart(chart.id)}
                         onDownload={() => handleDownloadChart(chart.id)}
+                      />
+                    </div>
+                  ))}
+                  
+                  {/* Render text boxes */}
+                  {canvas.textBoxes && canvas.textBoxes.map(textBox => (
+                    <div
+                      key={textBox.id}
+                      data-grid={(canvas.layout && canvas.layout.find(l => l.i === textBox.id)) || {
+                        x: 0, y: 0, w: 4, h: 6
+                      }}
+                    >
+                      <TextBox
+                        id={textBox.id}
+                        content={textBox.content}
+                        onDelete={() => handleRemoveTextBox(textBox.id)}
+                        onContentChange={(content) => handleTextBoxContentChange(textBox.id, content)}
                       />
                     </div>
                   ))}

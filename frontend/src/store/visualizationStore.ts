@@ -16,6 +16,7 @@ const initialState : VisualizationStateData  = {
   canvases: [{
     id: 'default',
     name: 'Main Canvas',
+    textBoxes: [],
     charts: [],
     layout: []
   }],
@@ -45,6 +46,7 @@ export const useVisualizationStore = create<VisualizationState>()(
           id: Date.now().toString(),
           name: `Canvas ${get().canvases.length + 1}`,
           charts: [],
+          textBoxes: [],
           layout: []
         };
         set((state) => ({
@@ -65,6 +67,52 @@ export const useVisualizationStore = create<VisualizationState>()(
       },
       
       setSelectedCanvasId: (id: string) => set({ selectedCanvasId: id }),
+
+      addTextBox: (canvasId: string, textBox: any) => {
+        set((state) => ({
+          canvases: state.canvases.map(canvas =>
+            canvas.id === canvasId
+              ? {
+                  ...canvas,
+                  textBoxes: [...(canvas.textBoxes || []), textBox],
+                  layout: [
+                    ...(canvas.layout || []),
+                    { i: textBox.id, x: 0, y: Infinity, w: 3, h: 4 } // Add to bottom
+                  ]
+                }
+              : canvas
+          )
+        }));
+      },
+      
+      updateTextBox: (canvasId: string, textBoxId: string, updates: any) => {
+        set((state) => ({
+          canvases: state.canvases.map(canvas =>
+            canvas.id === canvasId
+              ? {
+                  ...canvas,
+                  textBoxes: (canvas.textBoxes || []).map(textBox =>
+                    textBox.id === textBoxId ? { ...textBox, ...updates } : textBox
+                  )
+                }
+              : canvas
+          )
+        }));
+      },
+      
+      removeTextBox: (canvasId: string, textBoxId: string) => {
+        set((state) => ({
+          canvases: state.canvases.map(canvas =>
+            canvas.id === canvasId
+              ? {
+                  ...canvas,
+                  textBoxes: (canvas.textBoxes || []).filter(textBox => textBox.id !== textBoxId),
+                  layout: canvas.layout?.filter(l => l.i !== textBoxId) || []
+                }
+              : canvas
+          )
+        }));
+      },
       
       // Chart operations
       addChart: (chart: ChartConfig) => {

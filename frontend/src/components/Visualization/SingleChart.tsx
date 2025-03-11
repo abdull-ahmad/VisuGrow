@@ -227,21 +227,7 @@ export const SingleChart: React.FC<SingleChartProps> = ({ chart, onSelect, onDel
             />;
         }
 
-        if (chart.chartType === 'radar') {
-            // Check for the nested structure specific to radar charts
-            if (!chartDataItem.data || !chartDataItem.data.data || chartDataItem.data.data.length === 0) {
-                return <EmptyStateDisplay
-                    title="Insufficient Data"
-                    message="Not enough data to visualize"
-                />;
-            }
-            
-            return (
-                <RadarChartComponent 
-                    data={chartDataItem.data.data} 
-                />
-            );
-        }
+        
 
         switch (chart.chartType) {
             case 'bar':
@@ -253,7 +239,7 @@ export const SingleChart: React.FC<SingleChartProps> = ({ chart, onSelect, onDel
                         color={chart.color}
                     />
                 );
-
+                
             case 'line':
                 return (
                     <LineChartComponent
@@ -291,6 +277,13 @@ export const SingleChart: React.FC<SingleChartProps> = ({ chart, onSelect, onDel
                     <RadialBarChartComponent
                         data={chartDataItem.data}
                         yParameter={chart.yParameter}
+                    />
+                );
+
+            case 'radar':
+                return (
+                    <RadarChartComponent 
+                        data={chartDataItem.data} 
                     />
                 );
 

@@ -9,6 +9,9 @@ export interface ChartCanvasProps {
   onRemoveChart: (chartId: string) => void;
   onDeleteCanvas: (canvasId: string) => void;
   onSelectChart: (chartId: string) => void;
+  onAddTextBox: (canvasId: string, textBox: TextBoxItem) => void;
+  onUpdateTextBox: (canvasId: string, textBoxId: string, updates: any) => void;
+  onRemoveTextBox: (canvasId: string, textBoxId: string) => void;
 }
 
 export interface VisualizationPanelProps {
@@ -18,7 +21,7 @@ export interface VisualizationPanelProps {
   onRemoveChart: (chartId: string) => void;
 }
 
-export type TimeScale = 'year' | 'month' | 'week' | 'day';
+export type TimeScale = 'Y' | 'M' | 'W' | 'D';
 
 export type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'radar' | 'radial' | 'funnel';
 
@@ -28,14 +31,21 @@ export interface ChartConfig {
   xParameter: string;
   yParameter: string;
   color?: string;
-  dateFilterType?: 'year' | 'month' | 'week' | 'day';
-  numberFilterType?: 'increasing' | 'decreasing' ;
+  dateFilterType?: TimeScale;
+  numberFilterType?: 'increasing' | 'decreasing' | null ;
+}
+
+export interface TextBoxItem {
+  id: string;
+  type: 'textbox';
+  content: string;
 }
 
 export interface CanvasConfig {
   id: string;
   name: string;
   charts: ChartConfig[];
+  textBoxes: TextBoxItem[];
   layout?: GridLayout.Layout[];
 }
 
@@ -77,6 +87,11 @@ export interface VisualizationState {
   updateChart: (id: string, updatedChart: Partial<ChartConfig>) => void;
   removeChart: (id: string) => void;
   setSelectedChartId: (id: string | null) => void;
+
+  addTextBox: (canvasId: string, textBox: any) => void;
+  updateTextBox: (canvasId: string, textBoxId: string, updates: any) => void;
+  removeTextBox: (canvasId: string, textBoxId: string) => void;
+
   
   // Layout operations
   handleLayoutChange: (canvasId: string, newLayout: Layout[]) => void;

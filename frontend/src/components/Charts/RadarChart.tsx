@@ -1,4 +1,4 @@
-import { Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
+import {PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
 import { COLORS, TOOLTIP_STYLE } from "../../constants/ChartConstants";
 
 interface RadarChartComponentProps {
@@ -24,10 +24,6 @@ export const RadarChartComponent: React.FC<RadarChartComponentProps> = ({ data }
                         fillOpacity={0.6}
                     />
                 ))}
-                <Legend
-                    iconType="circle"
-                    formatter={(value) => <span className="text-xs font-medium">{value}</span>}
-                />
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
             </RadarChart>
         </ResponsiveContainer>
