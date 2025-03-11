@@ -12,7 +12,7 @@ export const AreaChartComponent: React.FC<{
     timeScale: TimeScale;
 }> = ({ data, xParameter, yParameter, color, isDateField, timeScale }) => (
     <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} {...BASE_CHART_PROPS}>
+        <AreaChart data={data} {...BASE_CHART_PROPS} syncId='anyId'>
             <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
             <XAxis
                 dataKey="primary"

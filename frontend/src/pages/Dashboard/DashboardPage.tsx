@@ -3,10 +3,10 @@ import { Loader, CircleUserRound, Trash2, Store, FileText, Clock, Calendar, Sear
 import { useAuthStore } from '../../store/authStore';
 import { useDataStore } from '../../store/dataStore';
 import { DataSheetGrid, Column, keyColumn, textColumn, intColumn, percentColumn, dateColumn } from 'react-datasheet-grid';
-import Modal from '../../components/Modal';
+import Modal from '../../components/Modal/Modal';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/SideBar';
-import ProfileModal from '../../components/ProfileModal';
+import ProfileModal from '../../components/Modal/ProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 

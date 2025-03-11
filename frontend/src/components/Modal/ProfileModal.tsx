@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Lock, X, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, X, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -10,7 +10,7 @@ interface ProfileModalProps {
 }
 
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
-    const { user, updateProfile, changePassword, error } = useAuthStore();
+    const { user, updateProfile, changePassword } = useAuthStore();
     const [name, setName] = useState(user?.name || '');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');

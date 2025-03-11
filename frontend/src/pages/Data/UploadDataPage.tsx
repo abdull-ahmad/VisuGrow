@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import Modal from '../../components/Modal';
+import Modal from '../../components/Modal/Modal';
 import { File, UploadCloud, Grid, ShoppingBag, Search, AlertTriangle, X, Plus, ChevronRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore'
 import 'react-datasheet-grid/dist/style.css'
