@@ -71,7 +71,7 @@ export function formatDateByScale(date: Date, scale: TimeScale): string {
             return `${month} ${year}`;
         case 'W':
             return `Week ${Math.ceil(day / 7)} ${month} ${year}`;
-        case 'W':
+        case 'D':
             return `${day} ${month} ${year}`;
         default:
             return `${year}`;

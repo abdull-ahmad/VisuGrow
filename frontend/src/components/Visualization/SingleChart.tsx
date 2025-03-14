@@ -24,7 +24,7 @@ import { COLORS } from '../../constants/ChartConstants';
 // Main Component
 export const SingleChart: React.FC<SingleChartProps> = ({ chart, onSelect, onDelete, onDownload }) => {
     const { fileData, fileHeaders } = useDataStore();
-    const [timeScale, setTimeScale] = useState<TimeScale>('year');
+    const [timeScale, setTimeScale] = useState<TimeScale>('Y');
     const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {

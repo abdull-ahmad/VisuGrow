@@ -19,7 +19,7 @@ export const FilePanel: React.FC = () => {
     viewFile().catch(console.error);
   }, [viewFile]);
 
-  const handleFileSelect = (fileId: string, fileName: string) => {
+  const handleFileSelect = (fileId: string) => {
     setSelectedFileId(fileId);
     setIsDropdownOpen(false);
   };
@@ -84,7 +84,7 @@ export const FilePanel: React.FC = () => {
                         key={file._id} 
                         whileHover={{ backgroundColor: '#f3f4f6' }}
                         className={`px-4 py-3 cursor-pointer flex items-center ${file._id === selectedFileId ? 'bg-blue-50 text-[#053252]' : 'text-gray-700'}`}
-                        onClick={() => handleFileSelect(file._id, file.name)}
+                        onClick={() => handleFileSelect(file._id)}
                         role="option"
                         aria-selected={file._id === selectedFileId}
                       >
