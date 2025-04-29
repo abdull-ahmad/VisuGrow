@@ -1,62 +1,34 @@
 import React from 'react';
-import html2canvas from 'html2canvas';
-import { ChartCanvasProps } from '../../types/visualization';
-import { ArrowDownToLine, Type } from 'lucide-react';
-import { SingleChart } from './SingleChart';
 import GridLayout from 'react-grid-layout';
 import '/node_modules/react-grid-layout/css/styles.css';
 import '/node_modules/react-resizable/css/styles.css';
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'; // Assuming default import
+import html2canvas from 'html2canvas';
+import { Type, ArrowDownToLine, Inbox } from 'lucide-react';
+import { useVisualizationStore } from '../../store/visualizationStore';
+import { useDataSourceStore } from '../../store/dataSourceStore'; // Import
+import { SingleChart } from './SingleChart';
 import { TextBox } from '../TextBox';
 import { TextBoxItem } from '../../types/visualization';
-import { v4 as uuidv4 } from 'uuid'; 
+import { v4 as uuidv4 } from 'uuid';
 
-export const ChartCanvas: React.FC<ChartCanvasProps> = ({
-  canvases,
-  selectedCanvasId,
-  onLayoutChange,
-  onRemoveChart,
-  onSelectChart,
-  onAddTextBox,
-  onUpdateTextBox,
-  onRemoveTextBox
+// Props might be minimal now
+interface ChartCanvasProps {}
 
-}) => {
-  const handleLayoutChange = (newLayout: GridLayout.Layout[]) => {
-    onLayoutChange(selectedCanvasId, newLayout);
-  };
+export const ChartCanvas: React.FC<ChartCanvasProps> = () => {
+  const {
+    canvases,
+    selectedCanvasId,
+    handleLayoutChange: onLayoutChange, // Use store action
+    removeChart: onRemoveChart,         // Use store action
+    setSelectedChartId: onSelectChart,  // Use store action
+    addTextBox: addTextBoxToCanvas,
+    updateTextBox: updateTextBoxInCanvas,
+    removeTextBox: removeTextBoxFromCanvas,
+  } = useVisualizationStore();
 
-  const handleAddTextBox = () => {
-    if (typeof onAddTextBox === 'function') {
-      const newTextBox: TextBoxItem = {
-        id: uuidv4(),
-        type: 'textbox',
-        content: ''
-      };
-      console.log('Adding new text box:', newTextBox);
-      onAddTextBox(selectedCanvasId, newTextBox);
-    } else {
-      console.error('onAddTextBox function is not provided');
-    }
-  };
-
-  // Handle text box content changes
-  const handleTextBoxContentChange = (textBoxId: string, content: string) => {
-    if (typeof onUpdateTextBox === 'function') {
-      onUpdateTextBox(selectedCanvasId, textBoxId, { content });
-    } else {
-      console.error('onUpdateTextBox function is not provided');
-    }
-  };
-
-  // Handle text box deletion
-  const handleRemoveTextBox = (textBoxId: string) => {
-    if (typeof onRemoveTextBox === 'function') {
-      onRemoveTextBox(selectedCanvasId, textBoxId);
-    } else {
-      console.error('onRemoveTextBox function is not provided');
-    }
-  };
+  // Get data status from dataSourceStore
+  const { sourceData, isSourceLoading } = useDataSourceStore();
 
   const handleDownloadChart = async (chartId: string) => {
     const element = document.getElementById(`chart-${chartId}`);
@@ -132,99 +104,137 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = ({
     }
   };
 
+
   const selectedCanvas = canvases.find(canvas => canvas.id === selectedCanvasId);
 
+  // --- Handlers ---
+  // addTextBox, updateTextBox, removeTextBox call store actions directly
+  const handleAddTextBox = () => { /* ... calls addTextBoxToCanvas ... */
+     if (!selectedCanvasId) return;
+    const newTextBox: TextBoxItem = { id: uuidv4(), type: 'textbox', content: 'New Text' };
+    addTextBoxToCanvas(selectedCanvasId, newTextBox);
+  };
+  const handleUpdateTextBox = (textBoxId: string, content: string) => { /* ... calls updateTextBoxInCanvas ... */
+     if (!selectedCanvasId) return;
+     updateTextBoxInCanvas(selectedCanvasId, textBoxId, { content });
+  };
+  const handleRemoveTextBox = (textBoxId: string) => { /* ... calls removeTextBoxFromCanvas ... */
+     if (!selectedCanvasId) return;
+     removeTextBoxFromCanvas(selectedCanvasId, textBoxId);
+  };
+
+  // --- Render Logic ---
+  if (!selectedCanvas) {
+    return <div className="p-4 text-center text-gray-500">Canvas not found.</div>;
+  }
+
+  const layout = selectedCanvas.layout || [];
+  const chartsAndTextBoxes = [
+      ...(selectedCanvas.charts || []),
+      ...(selectedCanvas.textBoxes || [])
+  ];
+
+  // Generate default layout if needed
+  const currentLayout = chartsAndTextBoxes.map((item, index) => {
+      return layout.find(l => l.i === item.id) || {
+          i: item.id, x: (index * 4) % 12, y: Math.floor((index * 4) / 12) * 6,
+          w: 4, h: item.type === 'textbox' ? 3 : 6, // Default size
+          isResizable: true, isDraggable: true,
+      };
+  });
+
+  const isCanvasEmpty = chartsAndTextBoxes.length === 0;
+  const isDataLoaded = sourceData && sourceData.length > 0 && !isSourceLoading;
+
   return (
-    <div className="w-full h-full flex flex-col bg-gray-50">
-      {/* Header with current canvas name */}
-      <div className="bg-white border-b shadow-sm px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-poppins text-gray-800">
-          {selectedCanvas?.name || 'Canvas'}
-        </h1>
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={handleAddTextBox}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <Type size={16} /> Add Text
-          </button>
-          <button 
-            onClick={() => handleDownloadCanvas(selectedCanvasId)}
-            className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <ArrowDownToLine size={16} /> Export
-          </button>
+    <div className="w-full h-full flex flex-col bg-gray-100">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 shadow-sm px-4 py-3 flex items-center justify-between flex-shrink-0">
+        {/* ... (header content: title, buttons) ... */}
+         <h1 className="text-lg font-semibold text-gray-800 truncate pr-4"> {selectedCanvas.name} </h1>
+        <div className="flex items-center gap-3">
+          <button onClick={handleAddTextBox} className={`flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md transition-colors text-gray-700 hover:bg-gray-50 hover:border-gray-400`} > <Type size={16} /> Add Text </button>
+          <button onClick={ ()=> handleDownloadCanvas(selectedCanvasId)} disabled={isCanvasEmpty} className={`flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md transition-colors ${isCanvasEmpty ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50 hover:border-gray-400'}`} > <ArrowDownToLine size={16} /> Export Canvas </button>
         </div>
       </div>
-      
-      {/* Main content area */}
-      <div className="flex-1 relative overflow-hidden">
-        <div className="absolute inset-0">
-          {canvases
-            .filter(canvas => canvas.id === selectedCanvasId)
-            .map(canvas => (
-              <motion.div 
-                key={canvas.id} 
-                id={`canvas-${canvas.id}`}
+
+      {/* Main Grid Area */}
+      <div className="flex-grow relative overflow-auto p-4">
+         {/* Placeholder: Canvas is empty AND no data loaded */}
+         {isCanvasEmpty && !isDataLoaded && !isSourceLoading && (
+             <div className="absolute inset-0 flex items-center justify-center z-0">
+                 <div className="text-center p-6 bg-white/70 rounded-lg shadow border border-gray-200 backdrop-blur-sm">
+                     <Inbox size={40} className="mx-auto text-gray-400 mb-3"/>
+                     <p className="text-gray-500 font-medium">Canvas is empty</p>
+                     <p className="text-sm text-gray-400 mt-1">Load data and add charts, or add text boxes.</p>
+                 </div>
+             </div>
+         )}
+          {/* Placeholder: Canvas is empty BUT data IS loaded */}
+         {isCanvasEmpty && isDataLoaded && (
+             <div className="absolute inset-0 flex items-center justify-center z-0">
+                 <div className="text-center p-6 bg-white/70 rounded-lg shadow border border-gray-200 backdrop-blur-sm">
+                     <Inbox size={40} className="mx-auto text-gray-400 mb-3"/>
+                     <p className="text-gray-500 font-medium">Canvas is empty</p>
+                     <p className="text-sm text-gray-400 mt-1">Add charts from the builder panel or add text boxes.</p>
+                 </div>
+             </div>
+         )}
+
+
+        {/* Render grid only if there are items */}
+        {!isCanvasEmpty && (
+            <motion.div
+                key={selectedCanvasId}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="bg-white shadow-sm rounded-lg mx-6 my-4"
-                style={{
-                  height: '65vh',
-                  overflow: 'auto'
-                }}
-              >
+                className="min-h-full relative z-10" // Ensure grid is above placeholders
+                id={`canvas-${selectedCanvasId}`}
+            >
                 <GridLayout
-                  className="layout"
-                  layout={canvas.layout}
-                  cols={12}
-                  rowHeight={30}
-                  width={1200}
-                  onLayoutChange={handleLayoutChange}
-                  draggableHandle=".drag-handle"
-                  isResizable={true}
-                  isDraggable={true}
-                  margin={[16, 16]}
+                    className="layout"
+                    layout={currentLayout}
+                    cols={12}
+                    rowHeight={30}
+                    width={1200} // Consider making this dynamic
+                    onLayoutChange={(newLayout) => onLayoutChange(selectedCanvasId, newLayout)}
+                    draggableHandle=".drag-handle"
+                    isResizable={true}
+                    isDraggable={true}
+                    margin={[15, 15]}
+                    containerPadding={[0, 0]}
+                    useCSSTransforms={true}
+                    compactType="vertical"
                 >
-                  {/* Render charts */}
-                  {canvas.charts.map(chart => (
-                    <div
-                      key={chart.id}
-                      data-grid={(canvas.layout && canvas.layout.find(l => l.i === chart.id)) || {
-                        x: 0, y: 0, w: 4, h: 6
-                      }}
-                    >
-                      <SingleChart
-                        key={chart.id}
-                        chart={chart}
-                        onSelect={() => onSelectChart(chart.id)}
-                        onDelete={() => onRemoveChart(chart.id)}
-                        onDownload={() => handleDownloadChart(chart.id)}
-                      />
-                    </div>
-                  ))}
-                  
-                  {/* Render text boxes */}
-                  {canvas.textBoxes && canvas.textBoxes.map(textBox => (
-                    <div
-                      key={textBox.id}
-                      data-grid={(canvas.layout && canvas.layout.find(l => l.i === textBox.id)) || {
-                        x: 0, y: 0, w: 4, h: 6
-                      }}
-                    >
-                      <TextBox
-                        id={textBox.id}
-                        content={textBox.content}
-                        onDelete={() => handleRemoveTextBox(textBox.id)}
-                        onContentChange={(content) => handleTextBoxContentChange(textBox.id, content)}
-                      />
-                    </div>
-                  ))}
+                    {/* Render charts */}
+                    {(selectedCanvas.charts || []).map(chart => (
+                        <div key={chart.id} className="overflow-hidden rounded-lg" >
+                            <SingleChart
+                                chart={chart}
+                                onSelect={() => onSelectChart(chart.id)}
+                                onDelete={() => onRemoveChart(chart.id)}
+                                onDownload={() => handleDownloadChart(chart.id)}
+                                isDraggable={true}
+                            />
+                        </div>
+                    ))}
+
+                    {/* Render text boxes */}
+                    {(selectedCanvas.textBoxes || []).map(textBox => (
+                        <div key={textBox.id} className="overflow-hidden rounded-lg" >
+                            <TextBox
+                                id={textBox.id}
+                                content={textBox.content}
+                                onDelete={() => handleRemoveTextBox(textBox.id)}
+                                onContentChange={(content) => handleUpdateTextBox(textBox.id, content)}
+                                 // Assuming TextBox supports this
+                            />
+                        </div>
+                    ))}
                 </GridLayout>
-              </motion.div>
-            ))}
-        </div>
-      </div>      
+            </motion.div>
+        )}
+      </div>
     </div>
   );
 }

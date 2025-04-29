@@ -21,7 +21,7 @@ export interface VisualizationPanelProps {
   onRemoveChart: (chartId: string) => void;
 }
 
-export type TimeScale = 'Y' | 'M' | 'W' | 'D';
+export type TimeScale = 'Y' | 'M' | 'W' | 'D' | null ;
 
 export type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'radar' | 'radial' | 'funnel';
 

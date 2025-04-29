@@ -1,64 +1,123 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useDataStore } from '../../store/dataStore';
-import { ChartConfig, VisualizationPanelProps } from '../../types/visualization';
-import {
-  ChartArea, ChartBar, ChartLine, ChartPie,
-  Cone, Radar, Radiation, Trash2, Plus,
-  ArrowUp, ArrowDown, Calendar, Hash, X, Settings,
-  BarChart3, PieChart, LineChart, AreaChart, ChevronRight, ChevronLeft,
-  Ban
-} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Tippy from '@tippyjs/react';
-import 'tippy.js/dist/tippy.css';
-import './custom.css'
+import { Settings, Plus, X, BarChart3, LineChart, AreaChart, PieChart, Radar, Radiation, Cone, ChevronLeft, ChevronRight, Database, Palette, Filter, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
+import { useVisualizationStore } from '../../store/visualizationStore';
+import { useDataSourceStore } from '../../store/dataSourceStore'; // Import data source store
+import { ChartConfig } from '../../types/visualization';
 
 const COLOR_PRESETS = [
   '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
   '#ec4899', '#06b6d4', '#84cc16', '#6366f1', '#14b8a6'
 ];
 
-export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
-  charts,
-  addChart,
-  updateChart,
-  onRemoveChart,
-}) => {
-  const { fileHeaders } = useDataStore();
-  const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('type');
+// Helper components (ParameterOption, SelectInput - assuming they exist or are defined as in previous thoughts)
+// ... (Include ParameterOption and SelectInput helper components here if not imported) ...
+const ParameterOption: React.FC<{ value: string; children: React.ReactNode }> = ({ value, children }) => (
+  <option value={value} className="text-gray-800">{children}</option>
+);
+
+const SelectInput: React.FC<{
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: { name: string; type: string }[] | null;
+  placeholder: string;
+  disabled?: boolean;
+  filterType?: 'numeric' | 'date' | 'all'; // Optional filter
+}> = ({ label, value, onChange, options, placeholder, disabled = false, filterType = 'all' }) => {
+  const filteredOptions = React.useMemo(() => {
+    if (!options) return [];
+    if (filterType === 'numeric') {
+      return options.filter(h => ['number', 'integer', 'float', 'decimal'].includes(h.type?.toLowerCase()));
+    }
+    if (filterType === 'date') {
+       return options.filter(h => ['date', 'datetime', 'timestamp'].includes(h.type?.toLowerCase()));
+    }
+    return options;
+  }, [options, filterType]);
+
+  const hasOptions = filteredOptions.length > 0;
+
+  return (
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-600 mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={onChange}
+        disabled={!hasOptions || disabled}
+        className={`w-full px-3 py-2 bg-white border ${!hasOptions || disabled ? 'border-gray-200 bg-gray-100 cursor-not-allowed' : 'border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50'} rounded-md shadow-sm text-sm transition duration-150 ease-in-out`}
+      >
+        <ParameterOption value="">{hasOptions ? placeholder : `No ${filterType !== 'all' ? filterType : ''} fields available`}</ParameterOption>
+        {filteredOptions.map((header) => (
+          <ParameterOption key={header.name} value={header.name}>
+            {header.name} <span className="text-gray-400 text-xs">({header.type})</span>
+          </ParameterOption>
+        ))}
+      </select>
+    </div>
+  );
+};
+
+
+export const VisualizationPanel: React.FC = () => {
+  const {
+    canvases,
+    selectedCanvasId,
+    addChart: addChartToCanvas,
+    updateChart: updateChartInCanvas,
+    removeChart: removeChartFromCanvas,
+    selectedChartId,
+    setSelectedChartId,
+  } = useVisualizationStore();
+
+  // Use the data source store for headers and data status
+  const { sourceHeaders, sourceData, isSourceLoading } = useDataSourceStore();
+
+  const [activeTab, setActiveTab] = useState('data');
   const [expanded, setExpanded] = useState(true);
   const [scrollPosition, setScrollPosition] = useState(0);
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
+  const currentCanvas = canvases.find(c => c.id === selectedCanvasId);
+  const charts = currentCanvas?.charts || [];
   const selectedChart = charts.find((chart) => chart.id === selectedChartId);
 
+  // Auto-select first chart or clear selection
   useEffect(() => {
-    if (charts.length > 0 && !selectedChartId) {
+    if (charts.length > 0 && !charts.some(c => c.id === selectedChartId)) {
       setSelectedChartId(charts[0].id);
+    } else if (charts.length === 0) {
+      setSelectedChartId(null);
     }
-  }, [charts, selectedChartId]);
+  }, [charts, selectedChartId, setSelectedChartId]);
 
+  // --- Chart Actions ---
   const handleAddChart = () => {
+    if (!selectedCanvasId || !sourceData || sourceData.length === 0) return; // Prevent adding if no data
     const newChart: ChartConfig = {
       id: Date.now().toString(),
       chartType: 'bar',
       xParameter: '',
       yParameter: '',
-      color: COLOR_PRESETS[0],
+      color: COLOR_PRESETS[charts.length % COLOR_PRESETS.length],
     };
-    addChart(newChart);
+    addChartToCanvas(newChart);
     setSelectedChartId(newChart.id);
+    setActiveTab('data'); // Focus data tab for new chart
 
-    // Auto-scroll to the newly added chart
+    // Scroll to new chart tab
     setTimeout(() => {
-      if (chartContainerRef.current) {
-        chartContainerRef.current.scrollLeft = chartContainerRef.current.scrollWidth;
-      }
+      chartContainerRef.current?.scrollTo({ left: chartContainerRef.current.scrollWidth, behavior: 'smooth' });
     }, 100);
   };
 
-  const handleChartTypeChange = (chartId: string, newType: 'bar' | 'line' | 'area' | 'pie' | 'radar' | 'radial' | 'funnel') => {
+  const updateChart = (chartId: string, updates: Partial<ChartConfig>) => {
+     if (!selectedCanvasId) return;
+     updateChartInCanvas(chartId, updates);
+  }
+
+  // ... (handlers: handleChartTypeChange, handleXChange, handleYChange, handleColorChange, handleDateFilterChange, handleNumberFilterChange remain the same, calling updateChart) ...
+   const handleChartTypeChange = (chartId: string, newType: ChartConfig['chartType']) => {
     updateChart(chartId, { chartType: newType });
   };
 
@@ -74,7 +133,7 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
     updateChart(chartId, { color: newColor });
   };
 
-  const handleDateFilterChange = (chartId: string, filterType: 'Y' | 'M' | 'W' | 'D') => {
+  const handleDateFilterChange = (chartId: string, filterType: 'Y' | 'M' | 'W' | 'D' | null) => {
     updateChart(chartId, { dateFilterType: filterType });
   };
 
@@ -82,390 +141,271 @@ export const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
     updateChart(chartId, { numberFilterType: filterType });
   };
 
+
   const handleDeleteChart = (chartId: string) => {
-    onRemoveChart(chartId);
-    if (selectedChartId === chartId) {
-      setSelectedChartId(charts.find(c => c.id !== chartId)?.id || null);
-    }
+    if (!selectedCanvasId) return;
+    removeChartFromCanvas(chartId);
   };
 
-  const getParameterType = (paramName: string) => {
-    const header = fileHeaders?.find((h: any) => h.name === paramName);
-    return header?.type || null;
+  // --- Parameter Type Logic ---
+  const getParameterType = (paramName: string): string | null => {
+    const header = sourceHeaders?.find((h) => h.name === paramName);
+    const type = header?.type?.toLowerCase();
+    if (type === 'datetime' || type === 'timestamp') return 'date';
+    if (type === 'integer' || type === 'float' || type === 'decimal') return 'number';
+    return type || null;
   };
 
-  const getChartIcon = (type: string) => {
+  // Determine if filters should be shown based on selected params and chart type
+  const showDateFilter = selectedChart && (selectedChart.chartType === 'line' || selectedChart.chartType === 'area') && getParameterType(selectedChart.xParameter) === 'date';
+  const showNumberFilter = selectedChart && (getParameterType(selectedChart.yParameter) === 'number'); // Allow sorting for most charts with numeric Y
+
+  // --- UI Helpers ---
+  // ... (getChartIcon, scrollCharts, handleScroll, canScrollLeft, canScrollRight remain the same) ...
+   const getChartIcon = (type: string | undefined) => {
     switch (type) {
-      case 'bar': return <BarChart3 size={20} />;
-      case 'line': return <LineChart size={20} />;
-      case 'area': return <AreaChart size={20} />;
-      case 'pie': return <PieChart size={20} />;
-      case 'radar': return <Radar size={20} />;
-      case 'radial': return <Radiation size={20} />;
-      case 'funnel': return <Cone size={20} />;
-      default: return <BarChart3 size={20} />;
+      case 'bar': return <BarChart3 size={18} />; // Adjusted size
+      case 'line': return <LineChart size={18} />;
+      case 'area': return <AreaChart size={18} />;
+      case 'pie': return <PieChart size={18} />;
+      case 'radar': return <Radar size={18} />;
+      case 'radial': return <Radiation size={18} />;
+      case 'funnel': return <Cone size={18} />;
+      default: return <BarChart3 size={18} />;
     }
   };
 
   const scrollCharts = (direction: 'left' | 'right') => {
     if (chartContainerRef.current) {
-      const scrollAmount = 100; // Adjust as needed
+      const scrollAmount = 150;
+      const currentScroll = chartContainerRef.current.scrollLeft;
       const newPosition = direction === 'left'
-        ? Math.max(0, scrollPosition - scrollAmount)
-        : scrollPosition + scrollAmount;
-
-      chartContainerRef.current.scrollLeft = newPosition;
-      setScrollPosition(newPosition);
+        ? Math.max(0, currentScroll - scrollAmount)
+        : currentScroll + scrollAmount;
+      chartContainerRef.current.scrollTo({ left: newPosition, behavior: 'smooth' });
     }
   };
 
-  // Update scroll position when container scrolls
-  const handleScroll = () => {
-    if (chartContainerRef.current) {
-      setScrollPosition(chartContainerRef.current.scrollLeft);
-    }
+   const handleScroll = () => {
+     if (chartContainerRef.current) {
+       setScrollPosition(chartContainerRef.current.scrollLeft);
+     }
   };
 
-  // Check if we can scroll in either direction
-  const canScrollLeft = scrollPosition > 0;
+  const canScrollLeft = scrollPosition > 5; // Add buffer
   const canScrollRight = chartContainerRef.current
-    ? chartContainerRef.current.scrollWidth > chartContainerRef.current.clientWidth + scrollPosition
+    ? chartContainerRef.current.scrollWidth > chartContainerRef.current.clientWidth + scrollPosition + 5
     : false;
 
+
+  const isDataReady = sourceData && sourceData.length > 0 && !isSourceLoading;
+
+  // --- Render Logic ---
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-[#4a8cbb3a] rounded-lg shadow-lg overflow-hidden border border-gray-200"
+      className="bg-[#f8fafc] rounded-lg shadow-lg overflow-hidden border border-gray-200 flex flex-col h-full"
     >
-      <div className="bg-[#4a8cbb3a] px-4 py-3 flex items-center justify-between"
-
-      >
-        <h2 className="text-lg font-rowdies flex items-center gap-2">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#053252] to-[#1e5a87] px-4 py-3 flex items-center justify-between text-white shadow-sm flex-shrink-0">
+        {/* ... (header content remains the same) ... */}
+         <h2 className="text-lg font-rowdies flex items-center gap-2">
           <Settings className="h-5 w-5" />
           Chart Builder
         </h2>
         <button
           onClick={() => setExpanded(!expanded)}
           className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
+          aria-label={expanded ? "Collapse Panel" : "Expand Panel"}
         >
-          {expanded ? <X size={18} /> : <Plus size={18} />}
+          {expanded ? <X size={18} /> : <Settings size={18} />}
         </button>
       </div>
 
+      {/* Content Area */}
       <AnimatePresence>
         {expanded && (
           <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: 0 }}
-            className="overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-y-auto flex-grow" // Allows content to scroll if it overflows
           >
             <div className="p-4">
+              {/* Chart Selection Header & Tabs */}
               <div className="flex flex-col mb-4">
                 <div className="flex justify-between items-center mb-2">
-                  <div className="text-sm font-medium text-gray-500">
-                    {charts.length} {charts.length === 1 ? 'Chart' : 'Charts'}
+                  <div className="text-sm font-medium text-gray-600">
+                    {charts.length} {charts.length === 1 ? 'Chart' : 'Charts'} on '{currentCanvas?.name || 'Canvas'}'
                   </div>
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: isDataReady ? 1.05 : 1 }}
+                    whileTap={{ scale: isDataReady ? 0.95 : 1 }}
                     onClick={handleAddChart}
-                    className="flex items-center gap-1 px-3 py-1.5 text-white rounded-md text-sm font-medium shadow-sm "
-                    style={{ backgroundColor: '#053252' }}
+                    disabled={!isDataReady} // Disable if no data loaded
+                    className={`flex items-center gap-1 px-3 py-1.5 text-white rounded-md text-sm font-medium shadow-sm transition-colors ${
+                        !isDataReady ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#053252] hover:bg-[#1e5a87]'
+                    }`}
                   >
                     <Plus size={16} /> New Chart
                   </motion.button>
                 </div>
 
+                {/* Chart Tabs Scroller */}
                 {charts.length > 0 && (
                   <div className="relative flex items-center">
-                    {canScrollLeft && (
-                      <button
-                        onClick={() => scrollCharts('left')}
-                        className="absolute left-0 z-10 p-1 bg-white rounded-full shadow-md border border-gray-200 text-gray-500 hover:text-blue-600"
-                      >
-                        <ChevronLeft size={18} />
-                      </button>
+                    {/* ... (Scroll buttons and chart tabs container remain the same) ... */}
+                     {canScrollLeft && (
+                      <button onClick={() => scrollCharts('left')} className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-1 bg-white rounded-full shadow-md border border-gray-200 text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-colors" aria-label="Scroll charts left"> <ChevronLeft size={18} /> </button>
                     )}
-
-                    <div
-                      ref={chartContainerRef}
-                      onScroll={handleScroll}
-                      className="flex gap-2 overflow-x-auto py-2 px-5 scrollbar-hide max-w-full"
-                      style={{ scrollBehavior: 'smooth' }}
-                    >
-                      {charts.map(chart => (
-                        <Tippy key={chart.id} content={`Chart ${chart.id.substring(0, 4)}...`}>
-                          <button
-                            onClick={() => setSelectedChartId(chart.id)}
-                            className={`relative p-2 rounded-md transition-all flex-shrink-0 border-2 ${chart.id === selectedChartId
-                              ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
-                              : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                              }`}
-                          >
-                            {getChartIcon(chart.chartType)}
-                            {chart.id === selectedChartId && (
-                              <motion.div
-                                layoutId="selected-chart"
-                                className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-500"
-                              />
-                            )}
-                          </button>
-                        </Tippy>
+                    <div ref={chartContainerRef} onScroll={handleScroll} className="flex space-x-2 overflow-x-auto scrollbar-hide py-1 px-8">
+                      {charts.map((chart, index) => (
+                        <button
+                          key={chart.id}
+                          onClick={() => setSelectedChartId(chart.id)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm whitespace-nowrap transition-colors border ${ selectedChartId === chart.id ? 'bg-blue-100 border-blue-300 text-blue-800 font-medium shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300' }`}
+                        >
+                          {getChartIcon(chart.chartType)}
+                          <span className="text-xs">Chart {index + 1}</span>
+                          <motion.button whileHover={{ scale: 1.2, color: '#ef4444' }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); handleDeleteChart(chart.id); }} className="ml-1 text-gray-400 hover:text-red-500" aria-label={`Delete Chart ${index + 1}`} > <Trash2 size={12} /> </motion.button>
+                        </button>
                       ))}
                     </div>
-
                     {canScrollRight && (
-                      <button
-                        onClick={() => scrollCharts('right')}
-                        className="absolute right-0 z-10 p-1 bg-white rounded-full shadow-md border border-gray-200 text-gray-500 hover:text-blue-600"
-                      >
-                        <ChevronRight size={18} />
-                      </button>
+                       <button onClick={() => scrollCharts('right')} className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-1 bg-white rounded-full shadow-md border border-gray-200 text-gray-500 hover:text-blue-600 hover:bg-gray-50 transition-colors" aria-label="Scroll charts right"> <ChevronRight size={18} /> </button>
                     )}
                   </div>
                 )}
               </div>
 
-              {charts.length === 0 && (
-                <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                  <div className="mx-auto bg-white rounded-full w-16 h-16 flex items-center justify-center mb-3 shadow-sm">
-                    <PieChart className="text-blue-400" size={28} />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-700">No Charts Yet</h3>
-                  <p className="text-sm text-gray-500 mb-4">Create your first chart to get started</p>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleAddChart}
-                    className="inline-flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium text-white shadow-sm"
-                    style={{ backgroundColor: '#053252' }}
-                  >
-                    <Plus size={18} /> Create Chart
-                  </motion.button>
-                </div>
+              {/* Placeholder: No Data Loaded */}
+              {!isDataReady && !isSourceLoading && charts.length === 0 && (
+                 <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300 mt-4">
+                    {/* ... (Placeholder content) ... */}
+                    <div className="mx-auto bg-white rounded-full w-16 h-16 flex items-center justify-center mb-3 shadow-sm border"> <Database className="text-blue-400" size={28} /> </div>
+                    <h3 className="text-lg font-medium text-gray-700">Load Data Source</h3>
+                    <p className="text-sm text-gray-500 mb-4">Select and load a data source to start building charts.</p>
+                 </div>
               )}
 
-              {selectedChart && (
-                <>
-                  <div className="flex border-b gap-1 mb-4 mt-4 bg-gray-50 rounded-t-lg">
-                    {['type', 'data', 'style'].map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2 text-sm font-medium relative ${activeTab === tab
-                          ? 'text-blue-600'
-                          : 'text-gray-500 hover:text-gray-700'
-                          }`}
-                      >
-                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                        {activeTab === tab && (
-                          <motion.div
-                            layoutId="active-tab"
-                            className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
-                          />
-                        )}
-                      </button>
-                    ))}
-                    <div className="ml-auto">
-                      <Tippy content="Delete chart">
-                        <button
-                          onClick={() => handleDeleteChart(selectedChart.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </Tippy>
-                    </div>
+              {/* Placeholder: Data Loaded, No Charts */}
+               {isDataReady && charts.length === 0 && (
+                 <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300 mt-4">
+                    {/* ... (Placeholder content) ... */}
+                    <div className="mx-auto bg-white rounded-full w-16 h-16 flex items-center justify-center mb-3 shadow-sm border"> <PieChart className="text-blue-400" size={28} /> </div>
+                    <h3 className="text-lg font-medium text-gray-700">No Charts Yet</h3>
+                    <p className="text-sm text-gray-500 mb-4">Create your first chart using the loaded data.</p>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleAddChart} className="inline-flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium text-white shadow-sm bg-[#053252] hover:bg-[#1e5a87]"> <Plus size={18} /> Create Chart </motion.button>
+                 </div>
+              )}
+
+              {/* Chart Configuration Section */}
+              {selectedChart && isDataReady && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  {/* Config Tabs (Data, Visualize, Filter) */}
+                  <div className="flex border-b border-gray-200 mb-4 bg-gray-50 rounded-t-lg overflow-hidden">
+                    {/* ... (Tab buttons remain the same) ... */}
+                     <button onClick={() => setActiveTab('data')} className={`flex-1 px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'data' ? 'bg-white text-[#053252] border-b-2 border-[#053252]' : 'text-gray-500 hover:bg-gray-100'}`}> <Database size={16} /> Data </button>
+                     <button onClick={() => setActiveTab('visualize')} className={`flex-1 px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'visualize' ? 'bg-white text-[#053252] border-b-2 border-[#053252]' : 'text-gray-500 hover:bg-gray-100'}`}> <Palette size={16} /> Visualize </button>
+                     <button onClick={() => setActiveTab('filter')} className={`flex-1 px-4 py-2.5 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'filter' ? 'bg-white text-[#053252] border-b-2 border-[#053252]' : 'text-gray-500 hover:bg-gray-100'}`}> <Filter size={16} /> Filter </button>
                   </div>
 
+                  {/* Tab Content */}
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={activeTab}
-                      initial={{ opacity: 0, y: 5 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
+                      exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="bg-white rounded-b-lg p-4 border border-gray-100 shadow-sm"
                     >
-                      {activeTab === 'type' && (
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-2 text-gray-700">Chart Type</label>
-                            <div className="grid grid-cols-4 gap-2">
-                              {[
-                                { type: 'bar', icon: <ChartBar />, label: 'Bar' },
-                                { type: 'line', icon: <ChartLine />, label: 'Line' },
-                                { type: 'area', icon: <ChartArea />, label: 'Area' },
-                                { type: 'pie', icon: <ChartPie />, label: 'Pie' },
-                                { type: 'radar', icon: <Radar />, label: 'Radar' },
-                                { type: 'radial', icon: <Radiation />, label: 'Radial' },
-                                { type: 'funnel', icon: <Cone />, label: 'Funnel' },
-                              ].map(item => (
-                                <Tippy key={item.type} content={`${item.label} Chart`}>
-                                  <button
-                                    onClick={() => handleChartTypeChange(selectedChart.id, item.type as any)}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-lg transition-all border-2 ${selectedChart.chartType === item.type
-                                      ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm'
-                                      : 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:bg-gray-100 text-gray-700'
-                                      }`}
-                                  >
-                                    <div className="mb-1">{item.icon}</div>
-                                    <span className="text-xs font-medium">{item.label}</span>
-                                  </button>
-                                </Tippy>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
+                      {/* Data Tab */}
                       {activeTab === 'data' && (
-                        <div className="space-y-4">
-                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div className="flex items-center mb-3">
-                              <div className="p-2 rounded-md bg-blue-100 text-blue-700 mr-3">
-                                <Hash size={16} />
-                              </div>
-                              <label className="block text-sm font-medium">X-Axis Parameter</label>
-                            </div>
-                            <select
-                              value={selectedChart.xParameter || ''}
+                        <div>
+                           <SelectInput
+                              label="X-Axis Parameter"
+                              value={selectedChart.xParameter}
                               onChange={(e) => handleXChange(selectedChart.id, e.target.value)}
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                            >
-                              <option value="">Select X-axis...</option>
-                              {fileHeaders?.map((header: any) => (
-                                <option key={header._id} value={header.name}>
-                                  {header.name} ({header.type})
-                                </option>
-                              ))}
-                            </select>
+                              options={sourceHeaders} // Use headers from dataSourceStore
+                              placeholder="Select X parameter..."
+                              filterType="all" // Allow any type for X
+                           />
+                           <SelectInput
+                              label="Y-Axis Parameter"
+                              value={selectedChart.yParameter}
+                              onChange={(e) => handleYChange(selectedChart.id, e.target.value)}
+                              options={sourceHeaders} // Use headers from dataSourceStore
+                              placeholder="Select Y parameter..."
+                              filterType="numeric" // Suggest numeric for Y by default
+                           />
+                        </div>
+                      )}
 
-                            {selectedChart.xParameter && getParameterType(selectedChart.xParameter) === 'date' && (
-                              <div className="mt-3 p-2 bg-white rounded border border-gray-200">
-                                <div className="flex items-center mb-2">
-                                  <Calendar size={14} className="mr-1 text-blue-500" />
-                                  <span className="text-xs font-medium text-gray-700">Date Grouping</span>
-                                </div>
-                                <div className="grid grid-cols-4 gap-1">
-                                  {['Y', 'M', 'W', 'D'].map(period => (
-                                    <button
-                                      key={period}
-                                      onClick={() => handleDateFilterChange(selectedChart.id, period as any)}
-                                      className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${selectedChart.dateFilterType === period
-                                        ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
-                                        }`}
-                                    >
-                                      {period.charAt(0).toUpperCase() + period.slice(1)}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                      {/* Visualize Tab */}
+                      {activeTab === 'visualize' && (
+                        <div>
+                          {/* ... (Chart Type and Color selection remain the same) ... */}
+                           <label className="block text-sm font-medium text-gray-600 mb-2">Chart Type</label>
+                          <div className="grid grid-cols-4 gap-2 mb-4"> {/* Adjusted grid cols */}
+                            {(['bar', 'line', 'area', 'pie', 'radar', 'radial', 'funnel'] as ChartConfig['chartType'][]).map((type) => (
+                              <button key={type} onClick={() => handleChartTypeChange(selectedChart.id, type)} className={`flex flex-col items-center justify-center p-2 rounded-md border text-xs transition-colors ${ selectedChart.chartType === type ? 'bg-blue-100 border-blue-300 text-blue-800 shadow-sm' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300' }`} >
+                                {getChartIcon(type)}
+                                <span className="mt-1 capitalize">{type || 'N/A'}</span>
+                              </button>
+                            ))}
                           </div>
 
-                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div className="flex items-center mb-3">
-                              <div className="p-2 rounded-md bg-green-100 text-green-700 mr-3">
-                                <Hash size={16} />
-                              </div>
-                              <label className="block text-sm font-medium">Y-Axis Parameter</label>
-                            </div>
-                            <select
-                              value={selectedChart.yParameter || ''}
-                              onChange={(e) => handleYChange(selectedChart.id, e.target.value)}
-                              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white"
-                            >
-                              <option value="">Select Y-axis...</option>
-                              {fileHeaders?.map((header: any) => (
-                                <option key={header._id} value={header.name}>
-                                  {header.name} ({header.type})
-                                </option>
-                              ))}
-                            </select>
-
-                            {selectedChart.yParameter && getParameterType(selectedChart.yParameter) === 'number' && (
-                              <div className="mt-3 p-2 bg-white rounded border border-gray-200">
-                                <div className="flex items-center mb-2">
-                                  <Hash size={14} className="mr-1 text-green-500" />
-                                  <span className="text-xs font-medium text-gray-700">Value Sorting</span>
-                                </div>
-                                <div className="grid grid-cols-3 gap-1">
-                                  <button
-                                    onClick={() => handleNumberFilterChange(selectedChart.id, null)}
-                                    className={`flex items-center justify-center px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${!selectedChart.numberFilterType
-                                      ? 'bg-gray-200 text-gray-800 border border-gray-300'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
-                                      }`}
-                                  >
-                                    <Ban size={14}/>
-                                  </button>
-                                  <button
-                                    onClick={() => handleNumberFilterChange(selectedChart.id, 'increasing')}
-                                    className={`flex items-center justify-center px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${selectedChart.numberFilterType === 'increasing'
-                                      ? 'bg-green-100 text-green-700 border border-green-300'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
-                                      }`}
-                                  >
-                                    <ArrowUp size={14}/>
-                                  </button>
-                                  <button
-                                    onClick={() => handleNumberFilterChange(selectedChart.id, 'decreasing')}
-                                    className={`flex items-center justify-center px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${selectedChart.numberFilterType === 'decreasing'
-                                      ? 'bg-green-100 text-green-700 border border-green-300'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
-                                      }`}
-                                  >
-                                    <ArrowDown size={14} />
-                                  </button>
-                                </div>
-                              </div>
-                            )}
+                          <label className="block text-sm font-medium text-gray-600 mb-2">Color</label>
+                          <div className="flex flex-wrap gap-2">
+                            {COLOR_PRESETS.map((color) => (
+                              <button key={color} onClick={() => handleColorChange(selectedChart.id, color)} className={`w-6 h-6 rounded-full border-2 transition-transform transform hover:scale-110 ${ selectedChart.color === color ? 'border-gray-700 ring-2 ring-offset-1 ring-gray-500' : 'border-white shadow-sm' }`} style={{ backgroundColor: color }} aria-label={`Select color ${color}`} />
+                            ))}
                           </div>
                         </div>
                       )}
 
-                      {activeTab === 'style' && (
-                        <div className="space-y-4">
-                          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <label className="block text-sm font-medium mb-3 text-gray-700">Chart Color</label>
-                            <div className="mb-3 flex flex-wrap gap-2">
-                              {COLOR_PRESETS.map(color => (
-                                <Tippy key={color} content={color}>
-                                  <button
-                                    onClick={() => handleColorChange(selectedChart.id, color)}
-                                    className={`w-8 h-8 rounded-full transition-all ${selectedChart.color === color
-                                      ? 'ring-2 ring-offset-2 ring-blue-500 transform scale-110'
-                                      : 'hover:scale-105'
-                                      }`}
-                                    style={{ backgroundColor: color }}
-                                  />
-                                </Tippy>
-                              ))}
-                            </div>
-                            <div className="bg-white p-2 rounded border border-gray-200">
-                              <div className="flex items-center">
-                                <div
-                                  className="w-10 h-10 rounded mr-3"
-                                  style={{ backgroundColor: selectedChart.color || '#3b82f6' }}
-                                />
-                                <input
-                                  type="color"
-                                  value={selectedChart.color || '#3b82f6'}
-                                  onChange={(e) => handleColorChange(selectedChart.id, e.target.value)}
-                                  className="w-full h-10 rounded cursor-pointer"
-                                />
+                       {/* Filter Tab */}
+                      {activeTab === 'filter' && (
+                        <div>
+                          {/* Date Filter */}
+                          {showDateFilter ? (
+                            <div className="mb-4">
+                              {/* ... (Date filter buttons remain the same) ... */}
+                               <label className="block text-sm font-medium text-gray-600 mb-2">Group Date By (X-Axis)</label>
+                              <div className="flex gap-1 bg-gray-100 p-1 rounded-md">
+                                {( [null, 'Y', 'M', 'W', 'D'] as (('Y' | 'M' | 'W' | 'D' | null)[]) ).map((unit) => (
+                                  <button key={unit || 'none'} onClick={() => handleDateFilterChange(selectedChart.id, unit)} className={`flex-1 px-2 py-1 text-xs rounded ${ selectedChart.dateFilterType === unit ? 'bg-white shadow text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-200' }`} > {unit ? unit : 'None'} </button>
+                                ))}
                               </div>
                             </div>
-                          </div>
+                          ) : (
+                             <p className="text-sm text-gray-500 mb-4 bg-yellow-50 p-2 rounded border border-yellow-200">Date grouping available for Line/Area charts with a Date type X-axis.</p>
+                          )}
+
+                          {/* Number Filter (Sorting) */}
+                          {showNumberFilter ? (
+                            <div>
+                              {/* ... (Number filter buttons remain the same) ... */}
+                               <label className="block text-sm font-medium text-gray-600 mb-2">Sort By (Y-Axis)</label>
+                               <div className="flex gap-1 bg-gray-100 p-1 rounded-md">
+                                {( [null, 'increasing', 'decreasing'] as (('increasing' | 'decreasing' | null)[]) ).map((order) => (
+                                  <button key={order || 'none'} onClick={() => handleNumberFilterChange(selectedChart.id, order)} className={`flex-1 px-2 py-1 text-xs rounded flex items-center justify-center gap-1 ${ selectedChart.numberFilterType === order ? 'bg-white shadow text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-200' }`} >
+                                    {order === 'increasing' ? <ArrowUp size={12} /> : order === 'decreasing' ? <ArrowDown size={12} /> : null}
+                                    {order ? order.charAt(0).toUpperCase() + order.slice(1) : 'None'}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                             <p className="text-sm text-gray-500 bg-yellow-50 p-2 rounded border border-yellow-200">Y-Axis sorting requires a Numeric type Y-axis.</p>
+                          )}
                         </div>
                       )}
                     </motion.div>
                   </AnimatePresence>
-                </>
+                </div>
               )}
             </div>
           </motion.div>

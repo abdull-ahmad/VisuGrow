@@ -74,6 +74,7 @@ export const useEcomStore = create<EcomStoreState>((set) => ({
     try {
       const response = await apiClient.get(`/data/${storeId}`);
       set({ isLoading: false });
+      
       return response.data;
     } catch (error: any) {
       set({ error: error.response?.data?.message || 'Failed to fetch store data', isLoading: false });
