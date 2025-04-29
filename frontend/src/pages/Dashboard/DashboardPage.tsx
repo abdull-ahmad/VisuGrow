@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Loader, CircleUserRound, Trash2, Store, FileText, Clock, Calendar, Search, AlertTriangle, Eye } from 'lucide-react';
+import { Loader, CircleUserRound, Trash2, Store, FileText, Clock, Calendar, Search, AlertTriangle, Eye, ExternalLink, Check } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useDataStore } from '../../store/dataStore';
+import { useEcomStore } from '../../store/ecomStore';
 import { DataSheetGrid, Column, keyColumn, textColumn, intColumn, percentColumn, dateColumn } from 'react-datasheet-grid';
 import Modal from '../../components/Modal/Modal';
+import StoreModal from '../../components/EcomStore/StoreModal';
 import toast from 'react-hot-toast';
 import Sidebar from '../../components/SideBar';
 import ProfileModal from '../../components/Modal/ProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -31,6 +34,8 @@ const DashboardPage = () => {
     const [fileSearchQuery, setFileSearchQuery] = useState('');
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('files');
+    const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
+    const { stores, isLoading: isStoresLoading, fetchStores, deleteStore } = useEcomStore();
 
     const navigate = useNavigate();
 
@@ -39,8 +44,15 @@ const DashboardPage = () => {
     }, [viewFile]);
 
     useEffect(() => {
+        if (activeTab === 'integrations') {
+            fetchStores();
+        }
+    }, [activeTab, fetchStores]);
+
+
+    useEffect(() => {
         if (fileData && fileHeaders) {
-            const columns = fileHeaders.map((header:Header) => createColumn(header.title, header.type));
+            const columns = fileHeaders.map((header: Header) => createColumn(header.title, header.type));
             const rows = mapRowData(fileData, fileHeaders);
             setColDefs(columns);
             setRowData(rows);
@@ -172,14 +184,28 @@ const DashboardPage = () => {
         setNullCount(countNullValues(rowData));
     }, [rowData]);
 
-    const filteredFiles = files.filter(file => 
+    const filteredFiles = files.filter(file =>
         file.name.toLowerCase().includes(fileSearchQuery.toLowerCase())
     );
+
+    const handleConnectStore = () => {
+        setIsStoreModalOpen(true);
+    };
+
+    const handleStoreConnected = () => {
+        fetchStores();
+    };
+
+    const handleDisconnectStore = async (storeId: string) => {
+        if (confirm("Are you sure you want to disconnect this store?")) {
+            await deleteStore(storeId);
+        }
+    };
 
     return (
         <div className='flex h-screen bg-[#4a8cbb1b]'>
             <Sidebar isLoading={isLoading} error={error} handleLogout={handleLogout} />
-            
+
             <div className='flex-1 overflow-auto'>
                 {/* Header */}
                 <header className='bg-[#4a8cbb1b] shadow-sm px-8 py-6'>
@@ -188,8 +214,8 @@ const DashboardPage = () => {
                             <h1 className='text-3xl font-rowdies text-gray-800'>Dashboard</h1>
                             <p className='text-gray-500 mt-1 font-poppins'>Welcome back, {user?.name || 'User'}!</p>
                         </div>
-                        
-                        <button 
+
+                        <button
                             onClick={handleEditProfileClick}
                             className='flex items-center gap-2 bg-[#053252] text-white hover:bg-opacity-90 transition-all px-4 py-2 rounded-lg text-sm font-poppins shadow-sm'
                         >
@@ -249,8 +275,8 @@ const DashboardPage = () => {
                                 <div>
                                     <p className='text-sm text-gray-500 font-poppins'>Last Activity</p>
                                     <h3 className='text-lg font-bold mt-1'>
-                                        {files.length > 0 ? 
-                                            new Date(files[0].createdAt).toLocaleDateString() : 
+                                        {files.length > 0 ?
+                                            new Date(files[0].createdAt).toLocaleDateString() :
                                             'No activity'}
                                     </h3>
                                 </div>
@@ -263,27 +289,27 @@ const DashboardPage = () => {
 
                     {/* Tab navigation */}
                     <div className='flex border-b border-gray-200 mb-6'>
-                        <button 
+                        <button
                             onClick={() => setActiveTab('files')}
                             className={`px-4 py-3 font-poppins text-sm transition-all relative
                                 ${activeTab === 'files' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-800'}`}
                         >
                             Data Files
                             {activeTab === 'files' && (
-                                <motion.div 
+                                <motion.div
                                     className='absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600'
                                     layoutId="activeTabIndicator"
                                 />
                             )}
                         </button>
-                        <button 
+                        <button
                             onClick={() => setActiveTab('integrations')}
                             className={`px-4 py-3 font-poppins text-sm transition-all relative
                                 ${activeTab === 'integrations' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-800'}`}
                         >
                             Store Integrations
                             {activeTab === 'integrations' && (
-                                <motion.div 
+                                <motion.div
                                     className='absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600'
                                     layoutId="activeTabIndicator"
                                 />
@@ -315,10 +341,10 @@ const DashboardPage = () => {
                                                     className='pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
                                                 />
                                             </div>
-                                            
+
                                         </div>
                                     </div>
-                                    
+
                                     <div className='divide-y divide-gray-100'>
                                         {isFileLoading ? (
                                             <div className='p-12 flex justify-center'>
@@ -346,7 +372,7 @@ const DashboardPage = () => {
                                                     <div className='col-span-2'>TYPE</div>
                                                     <div className='col-span-2 text-right'>ACTIONS</div>
                                                 </div>
-                                                
+
                                                 {filteredFiles.map((file) => (
                                                     <motion.div
                                                         key={file._id}
@@ -359,36 +385,36 @@ const DashboardPage = () => {
                                                                 <FileText size={14} className='text-blue-600' />
                                                             </div>
                                                             <div>
-                                                                <h3 className='text-sm font-poppins text-gray-800 truncate max-w-xs cursor-pointer hover:text-blue-600' 
-                                                                   onClick={() => handleFileClick(file._id)}>
+                                                                <h3 className='text-sm font-poppins text-gray-800 truncate max-w-xs cursor-pointer hover:text-blue-600'
+                                                                    onClick={() => handleFileClick(file._id)}>
                                                                     {file.name}
                                                                 </h3>
                                                             </div>
                                                         </div>
-                                                        
+
                                                         <div className='col-span-3 text-sm text-gray-600'>
-                                                            {new Date(file.createdAt).toLocaleDateString('en-US', { 
-                                                                year: 'numeric', 
-                                                                month: 'short', 
-                                                                day: 'numeric' 
+                                                            {new Date(file.createdAt).toLocaleDateString('en-US', {
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                                day: 'numeric'
                                                             })}
                                                         </div>
-                                                        
+
                                                         <div className='col-span-2'>
                                                             <span className='inline-flex items-center px-2 py-0.5 rounded text-xs font-poppins bg-blue-100 text-blue-800'>
                                                                 {file.name.split('.').pop()?.toUpperCase()}
                                                             </span>
                                                         </div>
-                                                        
+
                                                         <div className='col-span-2 flex justify-end gap-2'>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleFileClick(file._id)}
                                                                 className='p-1.5 rounded-md hover:bg-gray-200 transition-colors'
                                                                 title="View file"
                                                             >
                                                                 <Eye size={16} className='text-gray-600' />
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleDelete(file._id)}
                                                                 className='p-1.5 rounded-md hover:bg-red-100 hover:text-red-600 transition-colors'
                                                                 title="Delete file"
@@ -413,47 +439,156 @@ const DashboardPage = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.2 }}
-                                className='bg-white rounded-xl shadow-sm border border-gray-100 p-6'
                             >
-                                <div className='flex gap-6'>
-                                    <div className='w-1/3 p-6 border border-gray-200 rounded-xl bg-gray-50'>
-                                        <Store size={32} className='text-gray-600 mb-4' />
-                                        <h3 className='text-lg font-rowdies'>Store Integration</h3>
-                                        <p className='text-gray-600 mt-2 mb-6'>Connect your e-commerce store to automatically import sales and inventory data.</p>
-                                        <button 
-                                            className='w-full py-2.5 bg-[#053252] text-white rounded-lg font-poppins'
-                                            onClick={() => toast.error('Coming Soon!')}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Integration info card */}
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit">
+                                        <div className="bg-blue-50 text-blue-700 rounded-full w-12 h-12 flex items-center justify-center mb-4">
+                                            <Store size={24} />
+                                        </div>
+                                        <h3 className="text-lg font-rowdies text-gray-800 mb-2">Store Integration</h3>
+                                        <p className="text-gray-600 text-sm mb-6">
+                                            Connect your e-commerce store to automatically import sales and inventory data for advanced visualizations.
+                                        </p>
+                                        <button
+                                            className="w-full py-2.5 bg-[#053252] text-white rounded-lg font-poppins flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-sm"
+                                            onClick={handleConnectStore}
                                         >
-                                            Connect Store
+                                            <span>Connect Store</span>
+                                            <ExternalLink size={16} />
                                         </button>
                                     </div>
-                                    
-                                    <div className='flex-1'>
-                                        <div className='bg-amber-50 border border-amber-200 rounded-lg p-5'>
-                                            <div className='flex items-start'>
-                                                <div className='mr-4'>
-                                                    <div className='rounded-full bg-amber-100 p-2'>
-                                                        <AlertTriangle size={18} className='text-amber-600' />
+
+                                    {/* Connected stores section */}
+                                    <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                                        <h3 className="font-rowdies text-xl text-gray-800 mb-4">Connected Stores</h3>
+
+                                        {isStoresLoading ? (
+                                            <div className="flex flex-col items-center justify-center py-12 text-center">
+                                                <div className="relative w-16 h-16 mb-4">
+                                                    <div className="absolute inset-0 rounded-full border-4 border-t-blue-600 border-blue-200 animate-spin"></div>
+                                                    <div className="absolute inset-3 bg-white rounded-full flex items-center justify-center">
+                                                        <Store size={20} className="text-blue-600" />
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <h3 className='text-amber-800 font-poppins'>No active integrations</h3>
-                                                    <p className='text-amber-700 text-sm mt-1'>
-                                                        Connect your store to start automatically importing data for visualization.
-                                                    </p>
-                                                    <button 
-                                                        className='mt-3 text-sm text-amber-800 font-poppins underline'
-                                                        onClick={() => toast.error('Coming Soon!')}
+                                                <p className="text-gray-500 font-poppins">Loading your stores...</p>
+                                            </div>
+                                        ) : Array.isArray(stores) && stores.length > 0 ? (
+                                            <div className="space-y-4">
+                                                {stores.map(store => (
+                                                    <motion.div
+                                                        key={store._id}
+                                                        initial={{ opacity: 0, y: 10 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        className="border border-gray-200 rounded-lg hover:border-blue-200 transition-all hover:shadow-md overflow-hidden"
                                                     >
-                                                        Learn how integrations work
-                                                    </button>
+                                                        <div className="flex justify-between items-center p-4 md:p-5">
+                                                            <div className="flex items-start md:items-center flex-col md:flex-row md:gap-4">
+                                                                {/* Store icon */}
+                                                                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mb-3 md:mb-0">
+                                                                    <Store size={20} className="text-white" />
+                                                                </div>
+
+                                                                {/* Store details */}
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <h4 className="font-medium text-lg text-gray-800">{store.name}</h4>
+                                                                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                                                                            {store.status || 'Active'}
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="text-sm text-gray-500 mt-1">
+                                                                        Connected {new Date(store.createdAt).toLocaleDateString('en-US', {
+                                                                            year: 'numeric',
+                                                                            month: 'short',
+                                                                            day: 'numeric'
+                                                                        })}
+                                                                    </div>
+
+                                                                    <div className="mt-2 flex items-center gap-3">
+                                                                        <a
+                                                                            href={store.apiEndpoint}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="flex items-center text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                                                                        >
+                                                                            <ExternalLink size={12} className="mr-1" />
+                                                                            View API Endpoint
+                                                                        </a>
+                                                                        <button
+                                                                            onClick={() => handleDisconnectStore(store._id)}
+                                                                            className="text-xs text-red-600 hover:text-red-800 hover:underline flex items-center"
+                                                                        >
+                                                                            <Trash2 size={12} className="mr-1" />
+                                                                            Disconnect
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            {/* Stats and indicators */}
+                                                            <div className="hidden md:flex flex-col items-end">
+                                                                <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                                                                    <Check size={12} className="mr-1" /> Connection Active
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Store metrics panel (expandable in future) */}
+                                                        {/* <div className="bg-gray-50 px-5 py-3 border-t border-gray-200 flex items-center justify-between">
+                                                            <div className="text-xs text-gray-600">
+                                                                Last sync: <span className="font-medium">Just now</span>
+                                                            </div>
+                                                            <button
+                                                                className="text-xs text-blue-600 hover:underline"
+                                                                onClick={() => toast.success("Data sync initiated!")}
+                                                            >
+                                                                Sync Now
+                                                            </button> 
+                                                        </div> */}
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="bg-gradient-to-r from-amber-50 to-blue-50 border border-gray-200 rounded-lg p-6">
+                                                <div className="max-w-lg mx-auto text-center">
+                                                    <div className="w-16 h-16 bg-white rounded-full shadow-sm mx-auto mb-4 flex items-center justify-center">
+                                                        <Store size={28} className="text-gray-400" />
+                                                    </div>
+                                                    <h3 className="text-lg font-medium text-gray-800 mb-2">No stores connected yet</h3>
+                                                    <p className="text-gray-600 text-sm mb-5">
+                                                        Connect your e-commerce store to automatically import your sales and inventory data.
+                                                        This will allow you to create powerful visualizations and gain insights from your store data.
+                                                    </p>
+                                                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                                        <button
+                                                            className="px-4 py-2 bg-[#053252] text-white rounded-md flex items-center justify-center gap-1 text-sm font-medium hover:bg-opacity-90"
+                                                            onClick={handleConnectStore}
+                                                        >
+                                                            <Store size={16} />
+                                                            Connect Your First Store
+                                                        </button>
+                                                        <button
+                                                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md flex items-center justify-center gap-1 text-sm"
+                                                            onClick={() => toast.success("Documentation coming soon!")}
+                                                        >
+                                                            Learn More
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        )}
+                                        
                                     </div>
                                 </div>
+                                
                             </motion.div>
                         )}
+                        <StoreModal
+                            isOpen={isStoreModalOpen}
+                            onClose={() => setIsStoreModalOpen(false)}
+                            onStoreConnected={handleStoreConnected}
+                        />
                     </AnimatePresence>
 
                     {/* Additional info area */}
@@ -465,7 +600,7 @@ const DashboardPage = () => {
                                     Create interactive charts and dashboards with your uploaded data
                                 </p>
                             </div>
-                            <button 
+                            <button
                                 className='px-5 py-2.5 bg-white text-blue-800 rounded-lg font-poppins hover:bg-blue-50 transition-colors'
                                 onClick={() => navigate('/visualization')}
                             >

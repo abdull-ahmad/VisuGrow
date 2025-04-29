@@ -1,7 +1,10 @@
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query'
 import RegisterPage from "./pages/Auth/RegisterPage";
 import LoginPage from "./pages/Auth/LoginPage";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
@@ -35,6 +38,7 @@ const AuthRedirect: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 const App: React.FC = () => {
   const { isCheckingAuth, checkAuth } = useAuthStore();
+  const queryClient = new QueryClient()
 
   useEffect(() => {
     checkAuth();
@@ -56,7 +60,7 @@ const App: React.FC = () => {
   const protectedRoutes = [
     { path: "/upload", element: <UploadDataPage /> },
     { path: "/dashboard", element: <DashboardPage /> },
-    { path: "/visualization", element: <VisualizationPage /> },
+    { path: "/visualization", element:<QueryClientProvider client={queryClient}> <VisualizationPage /> </QueryClientProvider>  },
   ];
 
   return (

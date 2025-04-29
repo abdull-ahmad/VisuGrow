@@ -28,6 +28,17 @@ type ColumnDefinition = {
     type: 'text' | 'number' | 'percent' | 'date';
 }
 
+interface TypeConfidence {
+    text: number;
+    number: number;
+    integer: number;
+    date: number;
+    percent: number;
+    currency: number;
+    boolean: number;
+    null: number;
+}
+
 const UploadDataPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [rowData, setRowData] = useState<RowData[]>([]);
@@ -48,7 +59,7 @@ const UploadDataPage = () => {
 
     const openModal = () => setIsModalOpen(true);
 
-    // Helper function to determine column type
+    // Helper function to determine column type from configuration
     const getColumnType = (column: Column): 'text' | 'number' | 'percent' | 'date' => {
         // Compare the column configuration with predefined columns
         const columnStr = JSON.stringify(column);
@@ -58,59 +69,123 @@ const UploadDataPage = () => {
         return 'text';
     };
 
-    // Rest of your helper functions remain the same
+    // Enhanced column type determination with confidence scoring
     const determineColumnType = (values: (string | number | Date | null)[]): 'text' | 'number' | 'date' | 'percent' => {
-        // Existing implementation
-        for (const value of values) {
-            if (value === null) continue;
+        // Constants for type inference
+        const SAMPLE_SIZE = 100;
+        const DATE_FORMATS = [
+            'yyyy-MM-dd', // ISO format
+            'MM/dd/yyyy', // US format
+            'dd/MM/yyyy', // European format
+            'yyyy/MM/dd', // Another common format
+            'yyyy-MM-dd\'T\'HH:mm:ss', // ISO datetime format
+            'yyyy-MM-dd\'T\'HH:mm:ss.SSS', // ISO datetime with milliseconds
+            'd-MMM-yy',
+            'dd-MMM-yy',
+            'd-MMM-yyyy',
+            'dd-MMM-yyyy',
+        ];
+        const CURRENCY_SYMBOLS = ['$', '€', '£', '¥', '₹'];
+        const BOOLEAN_VALUES = ['true', 'false', 'yes', 'no', 'y', 'n', '1', '0'];
 
-            // Check if the value is already a number
+        // Initialize confidence tracking
+        const confidence: TypeConfidence = {
+            text: 0,
+            number: 0,
+            integer: 0,
+            date: 0,
+            percent: 0,
+            currency: 0,
+            boolean: 0,
+            null: 0
+        };
+
+        // Take a sample of values to check (for performance with large datasets)
+        const sampleSize = Math.min(SAMPLE_SIZE, values.length);
+        const sample = values.length <= SAMPLE_SIZE
+            ? values
+            : values.filter((_, i) => i % Math.floor(values.length / SAMPLE_SIZE) === 0).slice(0, SAMPLE_SIZE);
+
+        // Process each value in the sample
+        for (const value of sample) {
+            if (value === null || value === undefined || value === '') {
+                confidence.null++;
+                continue;
+            }
+
+            // Convert to string for consistent processing
+            const strValue = typeof value === 'string' ? value.trim() : String(value).trim();
+
+            // Already a number or date
             if (typeof value === 'number') {
-                return 'number';
+                confidence.number++;
+                if (Number.isInteger(value)) confidence.integer++;
+                continue;
             }
-            // Check if the value is a string that can be converted to a number
-            if (typeof value === 'string') {
-                // Trim whitespace from the string
-                const trimmedValue = value.trim();
 
-                // Check if the value is a percentage
-                if (trimmedValue.endsWith('%')) {
-                    const numericValue = trimmedValue.slice(0, -1); // Remove the '%' sign
-                    if (!isNaN(Number(numericValue))) {
-                        return 'percent';
-                    }
-                }
+            if (value instanceof Date) {
+                confidence.date++;
+                continue;
+            }
 
-                // Check if the value is a number
-                if (!isNaN(Number(trimmedValue))) {
-                    return 'number';
-                }
+            // Check for boolean values
+            if (BOOLEAN_VALUES.includes(strValue.toLowerCase())) {
+                confidence.boolean++;
+            }
 
-                // Check if the value is a date
-                const dateFormats = [
-                    'yyyy-MM-dd', // ISO format
-                    'MM/dd/yyyy', // US format
-                    'dd/MM/yyyy', // European format
-                    'yyyy/MM/dd', // Another common format
-                    'yyyy-MM-dd\'T\'HH:mm:ss', // ISO datetime format
-                    'yyyy-MM-dd\'T\'HH:mm:ss.SSS', // ISO datetime with milliseconds
-                    'd-MMM-yy',
-                    'dd-MMM-yy',
-                    'd-MMM-yyyy',
-                    'dd-MMM-yyyy',
-                ];
-
-                for (const format of dateFormats) {
-                    const parsedDate = parse(trimmedValue, format, new Date());
-                    if (isValid(parsedDate)) {
-                        return 'date';
-                    }
+            // Check for percentage values
+            if (strValue.endsWith('%')) {
+                const numericValue = strValue.slice(0, -1).trim();
+                if (!isNaN(Number(numericValue))) {
+                    confidence.percent++;
+                    continue;
                 }
             }
+
+            // Check for currency values
+            if (CURRENCY_SYMBOLS.some(symbol => strValue.startsWith(symbol))) {
+                const numericValue = strValue.substring(1).replace(/,/g, '').trim();
+                if (!isNaN(Number(numericValue))) {
+                    confidence.currency++;
+                    continue;
+                }
+            }
+
+            // Check for numeric values
+            if (!isNaN(Number(strValue.replace(/,/g, '')))) {
+                confidence.number++;
+                if (Number.isInteger(Number(strValue.replace(/,/g, '')))) {
+                    confidence.integer++;
+                }
+                continue;
+            }
+
+            // Check for date values
+            let isDate = false;
+            for (const format of DATE_FORMATS) {
+                const parsedDate = parse(strValue, format, new Date());
+                if (isValid(parsedDate)) {
+                    confidence.date++;
+                    isDate = true;
+                    break;
+                }
+            }
+            if (isDate) continue;
+
+            // If nothing else matched, it's text
+            confidence.text++;
         }
 
-        // Default to text if no other type is detected
-        return 'text';
+        // Calculate non-null values for percentage
+        const nonNullCount = sampleSize - confidence.null;
+        if (nonNullCount === 0) return 'text'; // Default to text if all nulls
+
+        // Determine type based on highest confidence with thresholds
+        if (confidence.percent / nonNullCount > 0.6) return 'percent';
+        if (confidence.date / nonNullCount > 0.6) return 'date';
+        if ((confidence.number / nonNullCount > 0.7) || (confidence.currency / nonNullCount > 0.7)) return 'number';
+        
+        return 'text'; // Default to text if no clear type dominates
     };
 
     const createColumn = (name: string, type: 'text' | 'number' | 'percent' | 'date'): Column => {
@@ -203,61 +278,85 @@ const UploadDataPage = () => {
         }
     };
 
-    // Data processing functions remain the same
+    // Enhanced data processing with improved type inference
     const processData = (
         headers: string[],
         rows: Array<{ [key: string]: string | number | Date | null }>
     ): { columns: Column[]; rowData: any } => {
-        // Column Definitions
-        const columns: Column[] = headers.map((header: string) => {
-            const columnType = determineColumnType(rows.map(row => row[header]));
-            return createColumn(header, columnType);
+        // Collect all values for each column for type inference
+        const columnValues: {[key: string]: (string | number | Date | null)[]} = {};
+        headers.forEach(header => {
+            columnValues[header] = rows.map(row => row[header]);
         });
 
-        // Row Data Mapping
+        // Determine column types using confidence-based inference
+        const columnTypes: {[key: string]: 'text' | 'number' | 'date' | 'percent'} = {};
+        headers.forEach(header => {
+            columnTypes[header] = determineColumnType(columnValues[header]);
+        });
+
+        // Create column definitions
+        const columns: Column[] = headers.map((header: string) => {
+            return createColumn(header, columnTypes[header]);
+        });
+
+        // Process row data based on inferred types
         const rowDataMapped = rows.map((row: { [key: string]: string | number | Date | null }) => {
             const mappedRowData: { [key: string]: string | number | Date | null } = {};
+            
             headers.forEach((header: string) => {
                 let cellValue = row[header];
+                const columnType = columnTypes[header];
+                
                 if (typeof cellValue === 'string') {
                     const trimmedValue = cellValue.trim();
-
-                    // Handle percentage values
-                    if (trimmedValue.endsWith('%')) {
-                        const numericValue = trimmedValue.slice(0, -1);
-                        if (!isNaN(Number(numericValue))) {
-                            cellValue = parseFloat(numericValue) / 100;
-                        }
-                    }
-                    // Handle numeric values
-                    else if (!isNaN(Number(trimmedValue))) {
-                        cellValue = Number(trimmedValue);
-                    }
-                    // Handle date values
-                    else {
-                        const dateFormats = [
-                            'yyyy-MM-dd', // ISO format
-                            'MM/dd/yyyy', // US format
-                            'dd/MM/yyyy', // European format
-                            'yyyy/MM/dd', // Another common format
-                            'yyyy-MM-dd\'T\'HH:mm:ss', // ISO datetime format
-                            'yyyy-MM-dd\'T\'HH:mm:ss.SSS', // ISO datetime with milliseconds
-                            'd-MMM-yy',
-                            'dd-MMM-yy',
-                            'd-MMM-yyyy',
-                            'dd-MMM-yyyy',
-                        ];
-                        for (const format of dateFormats) {
-                            const parsedDate = parse(trimmedValue, format, new Date());
-                            if (isValid(parsedDate)) {
-                                cellValue = parsedDate;
-                                break;
+                    
+                    // Handle based on inferred column type
+                    switch(columnType) {
+                        case 'percent':
+                            if (trimmedValue.endsWith('%')) {
+                                const numericValue = trimmedValue.slice(0, -1);
+                                if (!isNaN(Number(numericValue))) {
+                                    cellValue = parseFloat(numericValue) / 100;
+                                }
+                            } else if (!isNaN(Number(trimmedValue))) {
+                                // Handle naked numbers in percent columns
+                                cellValue = Number(trimmedValue) / 100;
                             }
-                        }
+                            break;
+                            
+                        case 'number':
+                            // Handle currency and numeric values
+                            if (['$', '€', '£', '¥', '₹'].some(symbol => trimmedValue.startsWith(symbol))) {
+                                const numericValue = trimmedValue.substring(1).replace(/,/g, '');
+                                if (!isNaN(Number(numericValue))) {
+                                    cellValue = Number(numericValue);
+                                }
+                            } else if (!isNaN(Number(trimmedValue.replace(/,/g, '')))) {
+                                cellValue = Number(trimmedValue.replace(/,/g, ''));
+                            }
+                            break;
+                            
+                        case 'date':
+                            const dateFormats = [
+                                'yyyy-MM-dd', 'MM/dd/yyyy', 'dd/MM/yyyy', 'yyyy/MM/dd',
+                                'yyyy-MM-dd\'T\'HH:mm:ss', 'yyyy-MM-dd\'T\'HH:mm:ss.SSS',
+                                'd-MMM-yy', 'dd-MMM-yy', 'd-MMM-yyyy', 'dd-MMM-yyyy',
+                            ];
+                            for (const format of dateFormats) {
+                                const parsedDate = parse(trimmedValue, format, new Date());
+                                if (isValid(parsedDate)) {
+                                    cellValue = parsedDate;
+                                    break;
+                                }
+                            }
+                            break;
                     }
                 }
+                
                 mappedRowData[header] = cellValue !== undefined && cellValue !== '' ? cellValue : null;
             });
+            
             return mappedRowData;
         });
 
@@ -466,7 +565,7 @@ const UploadDataPage = () => {
                     </motion.div>
 
                     {/* Integration Card */}
-                    <motion.div
+                    {/* <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
@@ -497,7 +596,7 @@ const UploadDataPage = () => {
                                 </button>
                             </div>
                         </div>
-                    </motion.div>
+                    </motion.div> */}
                 </main>
             </div>
 
