@@ -120,7 +120,6 @@ export const getStoreData = async (req: CustomRequest, res: Response) => {
         const firstItemIsHeaders = Object.values(firstItem).every(val => typeof val === 'string');
 
         if (firstItemIsHeaders && rawData.length > 1) {
-            console.log("First row detected as headers, using second row for type inference.");
             dataForInference = rawData[1]; // Use the second row for inference
             actualData = rawData.slice(1); // Remove the header row from the actual data payload
         } else if (firstItemIsHeaders && rawData.length <= 1) {

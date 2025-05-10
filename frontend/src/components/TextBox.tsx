@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Pencil, Trash2, GripHorizontal } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
+import remarkGfm from 'remark-gfm'; // For GitHub-flavored markdown (e.g., tables, strikethrough)
 
 interface TextBoxProps {
   id: string;
@@ -39,7 +41,7 @@ export const TextBox: React.FC<TextBoxProps> = ({ id, content, onDelete, onConte
 
   return (
     <motion.div
-      className="h-full w-full overflow-hidden bg-white rounded-xl border border-gray-200"
+      className="h-full w-full overflow-hidden bg-white rounded-xl border border-gray-200 textbox"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -101,14 +103,18 @@ export const TextBox: React.FC<TextBoxProps> = ({ id, content, onDelete, onConte
             </div>
           </div>
         ) : (
-          <div 
-            className="prose prose-sm max-w-none h-full overflow-auto" 
+          <div
+            className="prose prose-sm max-w-none h-full overflow-auto"
             onClick={(e) => {
               e.stopPropagation();
               setIsEditing(true);
             }}
           >
-            {text || <span className="text-gray-400 italic">Click to add text</span>}
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]} // Enable GitHub-flavored markdown
+            >
+              {text || '*Click to add text*'}
+            </ReactMarkdown>
           </div>
         )}
       </div>

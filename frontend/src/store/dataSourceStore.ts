@@ -81,8 +81,6 @@ export const useDataSourceStore = create<DataSourceState>((set, get) => ({
         useEcomStore.getState().setStoreId(selectedSourceId);
       }
 
-      console.log("Data loaded successfully:", { headers, data });
-
       set({
         sourceHeaders: headers,
         sourceData: data,

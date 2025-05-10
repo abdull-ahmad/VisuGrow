@@ -338,7 +338,7 @@ export const VisualizationPanel: React.FC = () => {
                               onChange={(e) => handleYChange(selectedChart.id, e.target.value)}
                               options={sourceHeaders} // Use headers from dataSourceStore
                               placeholder="Select Y parameter..."
-                              filterType="numeric" // Suggest numeric for Y by default
+                              filterType="all" // Suggest numeric for Y by default
                            />
                         </div>
                       )}

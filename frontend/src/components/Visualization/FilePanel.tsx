@@ -3,7 +3,7 @@ import { useDataStore } from '../../store/dataStore';
 import { useEcomStore } from '../../store/ecomStore'; // Import ecom store
 import { useDataSourceStore } from '../../store/dataSourceStore'; // Import data source store
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, ChevronDown, Database, Upload, Inbox, Store, Check, AlertCircle } from 'lucide-react'; // Added Store, Check, AlertCircle icons
+import { FileText, ChevronDown, Database, Inbox, Store, Check, AlertCircle } from 'lucide-react'; // Added Store, Check, AlertCircle icons
 
 export const FilePanel: React.FC = () => {
   // Stores for listing sources
