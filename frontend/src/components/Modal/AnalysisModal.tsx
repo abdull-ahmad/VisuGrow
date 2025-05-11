@@ -82,7 +82,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
             title="Add this analysis as a note on the chart"
           >
             <PlusSquare size={16} className="mr-2" />
-            Add to Chart
+            Add to Canvas
           </button>
           <button
             onClick={onClose}

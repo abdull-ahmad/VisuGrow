@@ -1,5 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Loader, CircleUserRound, Trash2, Store, FileText, Clock, Calendar, Search, AlertTriangle, Eye, ExternalLink, Check, ArrowRight, FileCode, Copy, Book, Server } from 'lucide-react';
+import { Loader, 
+    CircleUserRound, 
+    Trash2, 
+    Store, 
+    FileText, 
+    Clock, 
+    Calendar, 
+    Search, 
+    AlertTriangle, 
+    Eye, 
+    ExternalLink, 
+    FileCode, 
+    Copy, 
+    Book, 
+    Server, 
+    RefreshCw } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useDataStore } from '../../store/dataStore';
 import { useEcomStore } from '../../store/ecomStore';
@@ -11,6 +26,7 @@ import Sidebar from '../../components/SideBar';
 import ProfileModal from '../../components/Modal/ProfileModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 
 type RowData = { [key: string]: string | number | Date | null; };
@@ -202,6 +218,108 @@ const DashboardPage = () => {
         }
     };
 
+    const [apiStatus, setApiStatus] = useState<{
+        status: 'connected' | 'disconnected' | 'error';
+        message: string;
+        errorCode?: number;
+    }>({
+        status: 'disconnected',
+        message: 'Checking connection...'
+    });
+    const [syncStatus, setSyncStatus] = useState<{
+        status: 'auto' | 'disabled';
+        lastSync: Date | null;
+    }>({
+        status: 'disabled',
+        lastSync: null
+    });
+    const [isCheckingApi, setIsCheckingApi] = useState(false);
+
+    // Add this function to check API connection
+    const checkApiConnection = async (endpoint: string) => {
+        if (!endpoint) return;
+
+        setIsCheckingApi(true);
+        setApiStatus({
+            status: 'disconnected',
+            message: 'Checking connection...'
+        });
+
+        try {
+            const response = await axios.get(endpoint, {
+                timeout: 7000,
+                withCredentials: false,
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.status === 200) {
+                setApiStatus({
+                    status: 'connected',
+                    message: 'API endpoint is accessible'
+                });
+
+                // Set sync status based on response headers or data
+                // This is an example - adjust according to your actual API
+                const lastSyncDate = response.headers['x-last-sync'] ||
+                    response.data?.last_sync_time ||
+                    new Date().toISOString();
+
+                setSyncStatus({
+                    status: 'auto',
+                    lastSync: new Date(lastSyncDate)
+                });
+            } else {
+                setApiStatus({
+                    status: 'error',
+                    message: `Unexpected response: ${response.status}`,
+                    errorCode: response.status
+                });
+            }
+        } catch (error: any) {
+            let errorMessage = 'Unable to connect to API';
+            let errorCode = 0;
+
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                errorMessage = `Server error: ${error.response.status}`;
+                errorCode = error.response.status;
+            } else if (error.request) {
+                // The request was made but no response was received
+                errorMessage = 'No response from server';
+            } else {
+                // Something happened in setting up the request
+                errorMessage = error.message || 'Connection failed';
+            }
+
+            setApiStatus({
+                status: 'error',
+                message: errorMessage,
+                errorCode
+            });
+
+            setSyncStatus({
+                status: 'disabled',
+                lastSync: null
+            });
+        } finally {
+            setIsCheckingApi(false);
+        }
+    };
+
+    // Add this useEffect to check the API when store data loads
+    useEffect(() => {
+        if (stores.length > 0 && activeTab === 'integrations') {
+            checkApiConnection(stores[0].apiEndpoint);
+        }
+    }, [stores, activeTab]);
+
+    // Add a refresh function
+    const handleRefreshConnection = () => {
+        if (stores.length > 0) {
+            checkApiConnection(stores[0].apiEndpoint);
+        }
+    };
+
     return (
         <div className='flex h-screen bg-[#4a8cbb1b]'>
             <Sidebar isLoading={isLoading} error={error} handleLogout={handleLogout} />
@@ -275,9 +393,54 @@ const DashboardPage = () => {
                                 <div>
                                     <p className='text-sm text-gray-500 font-poppins'>Last Activity</p>
                                     <h3 className='text-lg font-bold mt-1'>
-                                        {files.length > 0 ?
-                                            new Date(files[0].createdAt).toLocaleDateString() :
-                                            'No activity'}
+                                        {(() => {
+                                            // Get the most recent file timestamp
+                                            const lastFileDate = files.length > 0
+                                                ? new Date(files[0].createdAt)
+                                                : null;
+
+                                            // Get the most recent store connection timestamp
+                                            const lastStoreDate = stores.length > 0
+                                                ? new Date(stores[0].createdAt)
+                                                : null;
+
+                                            // Get the most recent sync timestamp
+                                            const lastSyncDate = syncStatus.lastSync;
+
+                                            // Find the most recent activity among all types
+                                            let latestDate = null;
+                                            let activityType = '';
+
+                                            if (lastFileDate) {
+                                                latestDate = lastFileDate;
+                                                activityType = 'File upload';
+                                            }
+
+                                            if (lastStoreDate && (!latestDate || lastStoreDate > latestDate)) {
+                                                latestDate = lastStoreDate;
+                                                activityType = 'Store connected';
+                                            }
+
+                                            if (lastSyncDate && (!latestDate || lastSyncDate > latestDate)) {
+                                                latestDate = lastSyncDate;
+                                                activityType = 'Store sync';
+                                            }
+
+                                            if (latestDate) {
+                                                return (
+                                                    <div>
+                                                        <span className='text-lg font-bold'>
+                                                            {latestDate.toLocaleDateString()}
+                                                        </span>
+                                                        <span className='block text-xs text-gray-500 mt-0.5'>
+                                                            {activityType}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            } else {
+                                                return 'No activity';
+                                            }
+                                        })()}
                                     </h3>
                                 </div>
                                 <div className='h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center'>
@@ -459,10 +622,15 @@ const DashboardPage = () => {
 
                                         <button
                                             onClick={handleConnectStore}
-                                            className="px-4 py-2 text-sm bg-[#053252] text-white rounded-lg shadow-sm hover:bg-[#0a4d7e] transition-colors flex items-center"
+                                            disabled={stores.length > 0}
+                                            className={`px-4 py-2 text-sm rounded-lg shadow-sm flex items-center ${stores.length > 0
+                                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                                : "bg-[#053252] text-white hover:bg-[#0a4d7e] transition-colors"
+                                                }`}
+                                            title={stores.length > 0 ? "You already have a connected store" : "Connect a new store"}
                                         >
                                             <Store size={16} className="mr-2" />
-                                            Connect Store
+                                            {stores.length > 0 ? "Store Connected" : "Connect Store"}
                                         </button>
                                     </div>
                                 </div>
@@ -525,26 +693,85 @@ const DashboardPage = () => {
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                                     <div className="bg-gray-50 rounded-lg p-4">
                                                         <h4 className="text-sm text-gray-500 font-medium mb-1">API Status</h4>
-                                                        <div className="flex items-center">
-                                                            <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                                                            <span className="text-lg font-medium">Connected</span>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center">
+                                                                {apiStatus.status === 'connected' ? (
+                                                                    <>
+                                                                        <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                                                        <span className="text-lg font-medium">Connected</span>
+                                                                    </>
+                                                                ) : apiStatus.status === 'error' ? (
+                                                                    <>
+                                                                        <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                                                                        <span className="text-lg font-medium">
+                                                                            {apiStatus.errorCode ? `Error ${apiStatus.errorCode}` : 'Failed'}
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
+                                                                        <span className="text-lg font-medium">Checking</span>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                            <button
+                                                                onClick={handleRefreshConnection}
+                                                                disabled={isCheckingApi}
+                                                                className="p-1.5 rounded-full hover:bg-gray-200 text-gray-600"
+                                                                title="Refresh connection status"
+                                                            >
+                                                                {isCheckingApi ? (
+                                                                    <Loader size={16} className="animate-spin" />
+                                                                ) : (
+                                                                    <RefreshCw size={16} />
+                                                                )}
+                                                            </button>
                                                         </div>
+                                                        {apiStatus.status !== 'connected' && (
+                                                            <p className="text-sm text-red-600 mt-1">{apiStatus.message}</p>
+                                                        )}
                                                     </div>
 
+                                                    {/* Replace the Data Sync block */}
                                                     <div className="bg-gray-50 rounded-lg p-4">
                                                         <h4 className="text-sm text-gray-500 font-medium mb-1">Data Sync</h4>
                                                         <div className="flex items-center">
-                                                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                                                            <span className="text-lg font-medium">Auto-syncing</span>
+                                                            {syncStatus.status === 'auto' ? (
+                                                                <>
+                                                                    <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                                                    <span className="text-lg font-medium">Auto-syncing</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="w-3 h-3 bg-gray-400 rounded-full mr-2"></div>
+                                                                    <span className="text-lg font-medium">Disabled</span>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </div>
 
+                                                    {/* Replace the Last Sync block */}
                                                     <div className="bg-gray-50 rounded-lg p-4">
                                                         <h4 className="text-sm text-gray-500 font-medium mb-1">Last Sync</h4>
                                                         <div className="flex items-center">
                                                             <Clock size={18} className="text-gray-400 mr-2" />
-                                                            <span className="text-lg font-medium">Just now</span>
+                                                            <span className="text-lg font-medium">
+                                                                {syncStatus.lastSync ? (
+                                                                    new Date(syncStatus.lastSync).toLocaleTimeString([], {
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit',
+                                                                        hour12: true
+                                                                    })
+                                                                ) : (
+                                                                    'Never'
+                                                                )}
+                                                            </span>
                                                         </div>
+                                                        {syncStatus.lastSync && (
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {new Date(syncStatus.lastSync).toLocaleDateString()}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -557,7 +784,18 @@ const DashboardPage = () => {
 
                                                     <div className="flex items-center">
                                                         <div className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm text-gray-800 font-mono flex-grow overflow-x-auto">
-                                                            {stores[0].apiEndpoint}
+                                                            {(() => {
+                                                                try {
+                                                                    const url = new URL(stores[0].apiEndpoint);
+                                                                    const comIndex = url.hostname.indexOf('.com');
+                                                                    if (comIndex !== -1) {
+                                                                        return `${url.protocol}//${url.hostname.substring(0, comIndex + 4)}...`;
+                                                                    }
+                                                                    return `${url.protocol}//${url.hostname}...`;
+                                                                } catch (e) {
+                                                                    return stores[0].apiEndpoint.substring(0, 30) + '...';
+                                                                }
+                                                            })()}
                                                         </div>
                                                         <button
                                                             onClick={() => {
@@ -600,39 +838,6 @@ const DashboardPage = () => {
                                             </div>
                                         </motion.div>
 
-                                        {/* Analytics preview - New component */}
-                                        <motion.div
-                                            initial={{ y: 20, opacity: 0 }}
-                                            animate={{ y: 0, opacity: 1 }}
-                                            transition={{ duration: 0.3, delay: 0.2 }}
-                                            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-                                        >
-                                            <div className="flex justify-between items-center mb-6">
-                                                <h3 className="text-lg font-rowdies text-gray-800">Sales Data Preview</h3>
-                                                <button
-                                                    onClick={() => navigate('/visualization')}
-                                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
-                                                >
-                                                    View Full Analytics
-                                                    <ArrowRight size={16} className="ml-1" />
-                                                </button>
-                                            </div>
-
-                                            <div className="aspect-[3/1] bg-gray-50 rounded-lg flex items-center justify-center">
-                                                <div className="text-center">
-                                                    <div className="bg-blue-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
-                                                        <FileText size={20} className="text-blue-600" />
-                                                    </div>
-                                                    <p className="text-gray-500 font-medium">Generate visualizations with your store data</p>
-                                                    <button
-                                                        onClick={() => navigate('/visualization')}
-                                                        className="mt-3 px-4 py-2 bg-blue-100 text-blue-600 text-sm rounded-lg hover:bg-blue-200 transition-colors"
-                                                    >
-                                                        Create Charts
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </motion.div>
                                     </div>
                                 ) : (
                                     <motion.div
@@ -692,8 +897,8 @@ const DashboardPage = () => {
                                                 </motion.div>
                                             </div>
 
-                                            
-                                            
+
+
                                         </div>
                                     </motion.div>
                                 )}

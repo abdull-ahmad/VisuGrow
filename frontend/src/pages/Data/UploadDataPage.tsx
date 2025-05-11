@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Modal from '../../components/Modal/Modal';
-import { File, UploadCloud, Grid, ShoppingBag, Search, AlertTriangle, X, Plus, ChevronRight, Loader2 } from 'lucide-react';
+import { File, UploadCloud, Grid, Search, AlertTriangle, X, Plus, ChevronRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore'
 import 'react-datasheet-grid/dist/style.css'
 import * as XLSX from 'xlsx';
@@ -20,6 +20,7 @@ import Sidebar from '../../components/SideBar';
 import { useNavigate } from 'react-router-dom';
 import { isValid, parse } from 'date-fns';
 import { motion } from 'framer-motion';
+import FileDataChatBox from '../../components/AI/FileDataChatBox';
 
 type RowData = { [key: string]: string | number | Date | null; };
 
@@ -184,7 +185,7 @@ const UploadDataPage = () => {
         if (confidence.percent / nonNullCount > 0.6) return 'percent';
         if (confidence.date / nonNullCount > 0.6) return 'date';
         if ((confidence.number / nonNullCount > 0.7) || (confidence.currency / nonNullCount > 0.7)) return 'number';
-        
+
         return 'text'; // Default to text if no clear type dominates
     };
 
@@ -284,13 +285,13 @@ const UploadDataPage = () => {
         rows: Array<{ [key: string]: string | number | Date | null }>
     ): { columns: Column[]; rowData: any } => {
         // Collect all values for each column for type inference
-        const columnValues: {[key: string]: (string | number | Date | null)[]} = {};
+        const columnValues: { [key: string]: (string | number | Date | null)[] } = {};
         headers.forEach(header => {
             columnValues[header] = rows.map(row => row[header]);
         });
 
         // Determine column types using confidence-based inference
-        const columnTypes: {[key: string]: 'text' | 'number' | 'date' | 'percent'} = {};
+        const columnTypes: { [key: string]: 'text' | 'number' | 'date' | 'percent' } = {};
         headers.forEach(header => {
             columnTypes[header] = determineColumnType(columnValues[header]);
         });
@@ -303,16 +304,16 @@ const UploadDataPage = () => {
         // Process row data based on inferred types
         const rowDataMapped = rows.map((row: { [key: string]: string | number | Date | null }) => {
             const mappedRowData: { [key: string]: string | number | Date | null } = {};
-            
+
             headers.forEach((header: string) => {
                 let cellValue = row[header];
                 const columnType = columnTypes[header];
-                
+
                 if (typeof cellValue === 'string') {
                     const trimmedValue = cellValue.trim();
-                    
+
                     // Handle based on inferred column type
-                    switch(columnType) {
+                    switch (columnType) {
                         case 'percent':
                             if (trimmedValue.endsWith('%')) {
                                 const numericValue = trimmedValue.slice(0, -1);
@@ -324,7 +325,7 @@ const UploadDataPage = () => {
                                 cellValue = Number(trimmedValue) / 100;
                             }
                             break;
-                            
+
                         case 'number':
                             // Handle currency and numeric values
                             if (['$', '€', '£', '¥', '₹'].some(symbol => trimmedValue.startsWith(symbol))) {
@@ -336,7 +337,7 @@ const UploadDataPage = () => {
                                 cellValue = Number(trimmedValue.replace(/,/g, ''));
                             }
                             break;
-                            
+
                         case 'date':
                             const dateFormats = [
                                 'yyyy-MM-dd', 'MM/dd/yyyy', 'dd/MM/yyyy', 'yyyy/MM/dd',
@@ -353,10 +354,10 @@ const UploadDataPage = () => {
                             break;
                     }
                 }
-                
+
                 mappedRowData[header] = cellValue !== undefined && cellValue !== '' ? cellValue : null;
             });
-            
+
             return mappedRowData;
         });
 
@@ -365,16 +366,29 @@ const UploadDataPage = () => {
 
     // Event handlers remain largely the same
     const handleColumnFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    event.preventDefault();
 
-        const columns: Column[] = columnDefinitions.map((colDef) => createColumn(colDef.name, colDef.type));
-
-        setColDefs(columns);
-        setRowData([]);
-        setIsModalOpen(true);
-
-        setIsColumnFormOpen(false);
-    };
+    // Create columns from definitions
+    const columns: Column[] = columnDefinitions.map((colDef) => createColumn(colDef.name, colDef.type));
+    
+    // Generate a sample row with null values for each column
+    const emptySampleRow = columnDefinitions.reduce((obj, colDef) => {
+        obj[colDef.name] = null;
+        return obj;
+    }, {} as RowData);
+    
+    // Set a default filename for created sheets
+    const sheetName = `New Sheet ${new Date().toLocaleDateString()}`;
+    setFileName(sheetName);
+    
+    // Create 5 empty rows to start with
+    const initialRows = Array(5).fill(0).map(() => ({...emptySampleRow}));
+    
+    setColDefs(columns);
+    setRowData(initialRows);
+    setIsModalOpen(true);
+    setIsColumnFormOpen(false);
+};
 
     const closeModal = () => {
         const userConfirmed = window.confirm("You have unsaved changes. Are you sure you want to close the modal?");
@@ -573,35 +587,48 @@ const UploadDataPage = () => {
                 onClose={closeModal}
                 onSearchReplace={handleSearchReplace}
                 onSave={handleFileSave}
-
             >
-                <div className="p-4">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold text-gray-800">{fileName}</h2>
-                        <div className="flex items-center gap-2">
-                            {nullCount > 0 && (
-                                <div className="flex items-center text-amber-600 bg-amber-50 px-3 py-1 rounded-md">
-                                    <AlertTriangle size={16} className="mr-1" />
-                                    <span className="text-sm">{nullCount} empty cells</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="border rounded-lg overflow-hidden">
-                        <DataSheetGrid
-                            value={rowData}
-                            onChange={setRowData}
-                            columns={colDefs}
-                            className="w-full"
+                <div className="p-4 flex h-[70vh]"> {/* Set a fixed height and use flex layout */}
+                    {/* Chat Box - Left Side */}
+                    <div className="w-[45%] pr-4">
+                        <FileDataChatBox
+                            rowData={rowData}
+                            colDefs={colDefs}
+                            fileName={fileName || ''}
+                            onDataUpdate={setRowData}
                         />
                     </div>
-
-                    {fileerror && (
-                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-                            {fileerror}
+                    
+                    {/* DataGrid - Right Side */}
+                    <div className="w-[55%] "> 
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-gray-800">{fileName}</h2>
+                            <div className="flex items-center gap-2">
+                                {nullCount > 0 && (
+                                    <div className="flex items-center text-amber-600 bg-amber-50 px-3 py-1 rounded-md">
+                                        <AlertTriangle size={16} className="mr-1" />
+                                        <span className="text-sm">{nullCount} empty cells</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    )}
+
+                        <div className="border rounded-lg overflow-hidden">
+                            <DataSheetGrid
+                                value={rowData}
+                                onChange={setRowData}
+                                columns={colDefs}
+                            />
+                        </div>
+
+                        {fileerror && (
+                            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                                {fileerror}
+                            </div>
+                        )}
+                    </div>
+
+                    
                 </div>
             </Modal>
 

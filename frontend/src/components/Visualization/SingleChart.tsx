@@ -262,7 +262,7 @@ export const SingleChart: React.FC<SingleChartProps> = ({
                 throw new Error(errorData.message || `Analysis failed: ${response.statusText}`);
             }
             const result = await response.json();
-            onAnalyze(result.analysis, "AI Analysis"); // Call the callback with the analysis result
+            onAnalyze(result.analysis, chartTitleForAnalysis) ; // Call the callback with the analysis result
         } catch (error) {
             console.error("AI Analysis error:", error);
             setAnalysisResult(error instanceof Error ? error.message : "An unexpected error occurred during analysis.");

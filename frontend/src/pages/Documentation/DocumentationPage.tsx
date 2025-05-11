@@ -1,7 +1,7 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { motion } from 'framer-motion';
-import { ArrowRight, Book, FileCode, Server, Copy, Check, ChevronRight, Database, Info, Shield, AlertTriangle, ExternalLink } from 'lucide-react';
+import { ArrowRight, Book, FileCode, Server, Copy, Check, ChevronRight, Database, Info, Shield, AlertTriangle, ExternalLink, Store } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -113,10 +113,10 @@ const DocumentationPage = () => {
 
                     <div className="flex items-center space-x-4">
                         <button
-                            onClick={() => navigate('/')}
+                            onClick={() => navigate('/dashboard')}
                             className="text-[#053252] hover:text-blue-700 font-poppins transition-colors flex items-center"
                         >
-                            <span className="mr-1">Back to Home</span>
+                            <span className="mr-1">Back to Dashboard</span>
                             <ChevronRight size={16} />
                         </button>
                     </div>
@@ -134,7 +134,7 @@ const DocumentationPage = () => {
                     >
                         <div className="flex justify-center mb-6">
                             <div className="bg-white/10 p-3 rounded-2xl">
-                                <Database className="w-12 h-12" />
+                                <Store className="w-12 h-12" />
                             </div>
                         </div>
                         <h1 className="text-4xl md:text-5xl font-rowdies leading-tight mb-6">
@@ -788,7 +788,7 @@ urlpatterns = [
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => navigate('/')}
+                                onClick={() => navigate('/dashboard')}
                                 className="bg-white text-[#053252] hover:bg-blue-50 font-poppins px-8 py-3 rounded-lg transition-colors w-full sm:w-auto"
                             >
                                 Back to Dashboard
