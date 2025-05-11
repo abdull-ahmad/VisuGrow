@@ -564,39 +564,6 @@ const UploadDataPage = () => {
                         </div>
                     </motion.div>
 
-                    {/* Integration Card */}
-                    {/* <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className='bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100'
-                    >
-                        <div className='border-b border-gray-100 px-6 py-4 bg-gradient-to-r from-green-50 to-white flex items-center'>
-                            <div className='bg-green-100 p-2 rounded-lg mr-4'>
-                                <ShoppingBag size={24} className='text-green-700' />
-                            </div>
-                            <div>
-                                <h2 className='text-lg font-rowdies text-gray-800'>E-commerce Integration</h2>
-                                <p className='text-sm text-gray-500'>Connect your online store</p>
-                            </div>
-                        </div>
-
-                        <div className='p-6'>
-                            <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
-                                <div className='space-y-2'>
-                                    <p className='text-gray-600'>Seamlessly connect your e-commerce store</p>
-                                    
-                                </div>
-                                <button
-                                    onClick={() => toast.error('Coming Soon!')}
-                                    className='bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800
-                                        text-white shadow-sm rounded-lg px-6 py-2.5 font-poppins transition-all whitespace-nowrap'
-                                >
-                                    Connect Store
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div> */}
                 </main>
             </div>
 

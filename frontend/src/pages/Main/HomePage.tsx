@@ -466,7 +466,7 @@ const HomePage = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400">
         <div className="border-t border-gray-800  p-8 flex flex-col md:flex-row justify-center items-center font-poppins">
-          <p>© 2024 VisuGrow - All Rights Reserved</p>
+          <p>© 2025 VisuGrow - All Rights Reserved</p>
         </div>
       </footer>
     </div>

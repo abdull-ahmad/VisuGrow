@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader, CircleUserRound, Trash2, Store, FileText, Clock, Calendar, Search, AlertTriangle, Eye, ExternalLink, Check } from 'lucide-react';
+import { Loader, CircleUserRound, Trash2, Store, FileText, Clock, Calendar, Search, AlertTriangle, Eye, ExternalLink, Check, ArrowRight, FileCode, Copy, Book, Server } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useDataStore } from '../../store/dataStore';
 import { useEcomStore } from '../../store/ecomStore';
@@ -439,149 +439,264 @@ const DashboardPage = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
                                 transition={{ duration: 0.2 }}
+                                className="space-y-6"
                             >
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                    {/* Integration info card */}
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit">
-                                        <div className="bg-blue-50 text-blue-700 rounded-full w-12 h-12 flex items-center justify-center mb-4">
-                                            <Store size={24} />
-                                        </div>
-                                        <h3 className="text-lg font-rowdies text-gray-800 mb-2">Store Integration</h3>
-                                        <p className="text-gray-600 text-sm mb-6">
-                                            Connect your e-commerce store to automatically import sales and inventory data for advanced visualizations.
-                                        </p>
+                                {/* Header with action buttons */}
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+                                    <div>
+                                        <h2 className="text-xl font-rowdies text-gray-800">Store Integrations</h2>
+                                        <p className="text-sm text-gray-500 mt-1">Connect your e-commerce platforms to visualize sales data</p>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
                                         <button
-                                            className="w-full py-2.5 bg-[#053252] text-white rounded-lg font-poppins flex items-center justify-center gap-2 hover:bg-opacity-90 transition-all shadow-sm"
-                                            onClick={handleConnectStore}
+                                            onClick={() => navigate('/documentation')}
+                                            className="px-4 py-2 text-sm bg-white border border-gray-200 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 transition-colors flex items-center"
                                         >
-                                            <span>Connect Store</span>
-                                            <ExternalLink size={16} />
+                                            <ExternalLink size={16} className="mr-2" />
+                                            View API Docs
+                                        </button>
+
+                                        <button
+                                            onClick={handleConnectStore}
+                                            className="px-4 py-2 text-sm bg-[#053252] text-white rounded-lg shadow-sm hover:bg-[#0a4d7e] transition-colors flex items-center"
+                                        >
+                                            <Store size={16} className="mr-2" />
+                                            Connect Store
                                         </button>
                                     </div>
-
-                                    {/* Connected stores section */}
-                                    <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                                        <h3 className="font-rowdies text-xl text-gray-800 mb-4">Connected Stores</h3>
-
-                                        {isStoresLoading ? (
-                                            <div className="flex flex-col items-center justify-center py-12 text-center">
-                                                <div className="relative w-16 h-16 mb-4">
-                                                    <div className="absolute inset-0 rounded-full border-4 border-t-blue-600 border-blue-200 animate-spin"></div>
-                                                    <div className="absolute inset-3 bg-white rounded-full flex items-center justify-center">
-                                                        <Store size={20} className="text-blue-600" />
-                                                    </div>
-                                                </div>
-                                                <p className="text-gray-500 font-poppins">Loading your stores...</p>
-                                            </div>
-                                        ) : Array.isArray(stores) && stores.length > 0 ? (
-                                            <div className="space-y-4">
-                                                {stores.map(store => (
-                                                    <motion.div
-                                                        key={store._id}
-                                                        initial={{ opacity: 0, y: 10 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        className="border border-gray-200 rounded-lg hover:border-blue-200 transition-all hover:shadow-md overflow-hidden"
-                                                    >
-                                                        <div className="flex justify-between items-center p-4 md:p-5">
-                                                            <div className="flex items-start md:items-center flex-col md:flex-row md:gap-4">
-                                                                {/* Store icon */}
-                                                                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mb-3 md:mb-0">
-                                                                    <Store size={20} className="text-white" />
-                                                                </div>
-
-                                                                {/* Store details */}
-                                                                <div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <h4 className="font-medium text-lg text-gray-800">{store.name}</h4>
-                                                                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                                                                            {store.status || 'Active'}
-                                                                        </span>
-                                                                    </div>
-
-                                                                    <div className="text-sm text-gray-500 mt-1">
-                                                                        Connected {new Date(store.createdAt).toLocaleDateString('en-US', {
-                                                                            year: 'numeric',
-                                                                            month: 'short',
-                                                                            day: 'numeric'
-                                                                        })}
-                                                                    </div>
-
-                                                                    <div className="mt-2 flex items-center gap-3">
-                                                                        <a
-                                                                            href={store.apiEndpoint}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="flex items-center text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                                                                        >
-                                                                            <ExternalLink size={12} className="mr-1" />
-                                                                            View API Endpoint
-                                                                        </a>
-                                                                        <button
-                                                                            onClick={() => handleDisconnectStore(store._id)}
-                                                                            className="text-xs text-red-600 hover:text-red-800 hover:underline flex items-center"
-                                                                        >
-                                                                            <Trash2 size={12} className="mr-1" />
-                                                                            Disconnect
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            {/* Stats and indicators */}
-                                                            <div className="hidden md:flex flex-col items-end">
-                                                                <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-medium flex items-center">
-                                                                    <Check size={12} className="mr-1" /> Connection Active
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Store metrics panel (expandable in future) */}
-                                                        {/* <div className="bg-gray-50 px-5 py-3 border-t border-gray-200 flex items-center justify-between">
-                                                            <div className="text-xs text-gray-600">
-                                                                Last sync: <span className="font-medium">Just now</span>
-                                                            </div>
-                                                            <button
-                                                                className="text-xs text-blue-600 hover:underline"
-                                                                onClick={() => toast.success("Data sync initiated!")}
-                                                            >
-                                                                Sync Now
-                                                            </button> 
-                                                        </div> */}
-                                                    </motion.div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="bg-gradient-to-r from-amber-50 to-blue-50 border border-gray-200 rounded-lg p-6">
-                                                <div className="max-w-lg mx-auto text-center">
-                                                    <div className="w-16 h-16 bg-white rounded-full shadow-sm mx-auto mb-4 flex items-center justify-center">
-                                                        <Store size={28} className="text-gray-400" />
-                                                    </div>
-                                                    <h3 className="text-lg font-medium text-gray-800 mb-2">No stores connected yet</h3>
-                                                    <p className="text-gray-600 text-sm mb-5">
-                                                        Connect your e-commerce store to automatically import your sales and inventory data.
-                                                        This will allow you to create powerful visualizations and gain insights from your store data.
-                                                    </p>
-                                                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                                                        <button
-                                                            className="px-4 py-2 bg-[#053252] text-white rounded-md flex items-center justify-center gap-1 text-sm font-medium hover:bg-opacity-90"
-                                                            onClick={handleConnectStore}
-                                                        >
-                                                            <Store size={16} />
-                                                            Connect Your First Store
-                                                        </button>
-                                                        <button
-                                                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md flex items-center justify-center gap-1 text-sm"
-                                                            onClick={() => toast.success("Documentation coming soon!")}
-                                                        >
-                                                            Learn More
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        
-                                    </div>
                                 </div>
-                                
+
+                                {/* Main content container */}
+                                {isStoresLoading ? (
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+                                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                                            <div className="relative w-20 h-20 mb-6">
+                                                <div className="absolute inset-0 rounded-full border-4 bg-[#053252] animate-spin"></div>
+                                                <div className="absolute inset-2 rounded-full bg-white flex items-center justify-center">
+                                                    <Store size={28} className="text-blue-600" />
+                                                </div>
+                                            </div>
+                                            <h3 className="text-xl font-poppins font-medium text-gray-800 mb-2">Loading your stores</h3>
+                                            <p className="text-gray-500 max-w-sm">We're retrieving your connected e-commerce platforms...</p>
+                                        </div>
+                                    </div>
+                                ) : stores.length > 0 ? (
+                                    <div className="grid grid-cols-1 gap-6">
+                                        {/* Connected store - Enhanced card UI */}
+                                        <motion.div
+                                            initial={{ scale: 0.98, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                                        >
+                                            {/* Store header */}
+                                            <div className="bg-[#053252]  p-5 text-white">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-white/20 p-2.5 rounded-lg backdrop-blur-sm">
+                                                            <Store size={20} className="text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className="text-lg font-medium">{stores[0].name}</h3>
+                                                            <p className="text-sm text-blue-100">Connected since {new Date(stores[0].createdAt).toLocaleDateString()}</p>
+                                                        </div>
+                                                        <span className="ml-3 bg-green-500/20 backdrop-blur-sm text-green-100 text-xs font-medium px-2.5 py-1 rounded-full flex items-center">
+                                                            <div className="w-2 h-2 bg-green-400 rounded-full mr-1.5"></div>
+                                                            {stores[0].status || 'Active'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => navigate('/visualization')}
+                                                            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-sm px-3 py-1.5 rounded-lg transition-all flex items-center"
+                                                        >
+                                                            <Eye size={16} className="mr-1.5" />
+                                                            Visualize Data
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Store details */}
+                                            <div className="p-6">
+                                                {/* Connection details */}
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                                    <div className="bg-gray-50 rounded-lg p-4">
+                                                        <h4 className="text-sm text-gray-500 font-medium mb-1">API Status</h4>
+                                                        <div className="flex items-center">
+                                                            <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                                                            <span className="text-lg font-medium">Connected</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-gray-50 rounded-lg p-4">
+                                                        <h4 className="text-sm text-gray-500 font-medium mb-1">Data Sync</h4>
+                                                        <div className="flex items-center">
+                                                            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                                            <span className="text-lg font-medium">Auto-syncing</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-gray-50 rounded-lg p-4">
+                                                        <h4 className="text-sm text-gray-500 font-medium mb-1">Last Sync</h4>
+                                                        <div className="flex items-center">
+                                                            <Clock size={18} className="text-gray-400 mr-2" />
+                                                            <span className="text-lg font-medium">Just now</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* API endpoint section */}
+                                                <div className="border border-gray-100 rounded-lg p-4 mb-6">
+                                                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                                        <FileCode size={16} className="text-blue-600 mr-2" />
+                                                        API Endpoint
+                                                    </h4>
+
+                                                    <div className="flex items-center">
+                                                        <div className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm text-gray-800 font-mono flex-grow overflow-x-auto">
+                                                            {stores[0].apiEndpoint}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(stores[0].apiEndpoint);
+                                                                toast.success('API endpoint copied to clipboard');
+                                                            }}
+                                                            className="ml-3 p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg"
+                                                            title="Copy to clipboard"
+                                                        >
+                                                            <Copy size={16} />
+                                                        </button>
+                                                    </div>
+
+                                                    <p className="text-xs text-gray-500 mt-2">
+                                                        This URL provides access to your store's sales data in JSON format.
+                                                        <a href={stores[0].apiEndpoint} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                                                            Test endpoint
+                                                        </a>
+                                                    </p>
+                                                </div>
+
+                                                {/* Action buttons */}
+                                                <div className="flex flex-wrap gap-3">
+                                                    <button
+                                                        onClick={() => handleDisconnectStore(stores[0]._id)}
+                                                        className="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-sm flex items-center transition-colors"
+                                                    >
+                                                        <Trash2 size={16} className="mr-2" />
+                                                        Disconnect Store
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => navigate('/documentation')}
+                                                        className="px-4 py-2 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg text-sm flex items-center transition-colors"
+                                                    >
+                                                        <Book size={16} className="mr-2" />
+                                                        View Documentation
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+
+                                        {/* Analytics preview - New component */}
+                                        <motion.div
+                                            initial={{ y: 20, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            transition={{ duration: 0.3, delay: 0.2 }}
+                                            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+                                        >
+                                            <div className="flex justify-between items-center mb-6">
+                                                <h3 className="text-lg font-rowdies text-gray-800">Sales Data Preview</h3>
+                                                <button
+                                                    onClick={() => navigate('/visualization')}
+                                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                                                >
+                                                    View Full Analytics
+                                                    <ArrowRight size={16} className="ml-1" />
+                                                </button>
+                                            </div>
+
+                                            <div className="aspect-[3/1] bg-gray-50 rounded-lg flex items-center justify-center">
+                                                <div className="text-center">
+                                                    <div className="bg-blue-100 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                                                        <FileText size={20} className="text-blue-600" />
+                                                    </div>
+                                                    <p className="text-gray-500 font-medium">Generate visualizations with your store data</p>
+                                                    <button
+                                                        onClick={() => navigate('/visualization')}
+                                                        className="mt-3 px-4 py-2 bg-blue-100 text-blue-600 text-sm rounded-lg hover:bg-blue-200 transition-colors"
+                                                    >
+                                                        Create Charts
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    </div>
+                                ) : (
+                                    <motion.div
+                                        initial={{ y: 20, opacity: 0 }}
+                                        animate={{ y: 0, opacity: 1 }}
+                                        className="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+                                    >
+                                        {/* Empty state header */}
+                                        <div className="bg-[#053252] text-white p-8 text-center">
+                                            <Store size={36} className="mx-auto mb-4" />
+                                            <h3 className="text-2xl font-rowdies mb-2">Connect Your E-commerce Store</h3>
+                                            <p className="text-blue-100 max-w-lg mx-auto">
+                                                Link your online store to automatically import and analyze your sales data
+                                            </p>
+                                        </div>
+
+                                        {/* Benefits section */}
+                                        <div className="p-8">
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.1 }}
+                                                    className="bg-white rounded-lg p-5 shadow-sm border border-gray-100"
+                                                >
+                                                    <div className="bg-blue-100 w-10 h-10 rounded-full flex items-center justify-center mb-3">
+                                                        <Server size={20} className="text-blue-600" />
+                                                    </div>
+                                                    <h4 className="text-lg font-medium mb-2">Automatic Data Import</h4>
+                                                    <p className="text-gray-600 text-sm">Your store data is automatically imported and kept in sync</p>
+                                                </motion.div>
+
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.2 }}
+                                                    className="bg-white rounded-lg p-5 shadow-sm border border-gray-100"
+                                                >
+                                                    <div className="bg-purple-100 w-10 h-10 rounded-full flex items-center justify-center mb-3">
+                                                        <FileText size={20} className="text-purple-600" />
+                                                    </div>
+                                                    <h4 className="text-lg font-medium mb-2">Real-time Analytics</h4>
+                                                    <p className="text-gray-600 text-sm">Create powerful visualizations based on your live sales data</p>
+                                                </motion.div>
+
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.3 }}
+                                                    className="bg-white rounded-lg p-5 shadow-sm border border-gray-100"
+                                                >
+                                                    <div className="bg-amber-100 w-10 h-10 rounded-full flex items-center justify-center mb-3">
+                                                        <AlertTriangle size={20} className="text-amber-600" />
+                                                    </div>
+                                                    <h4 className="text-lg font-medium mb-2">Trend Detection</h4>
+                                                    <p className="text-gray-600 text-sm">AI-powered insights help you spot sales trends and opportunities</p>
+                                                </motion.div>
+                                            </div>
+
+                                            
+                                            
+                                        </div>
+                                    </motion.div>
+                                )}
                             </motion.div>
                         )}
                         <StoreModal

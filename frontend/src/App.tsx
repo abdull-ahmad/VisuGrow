@@ -15,6 +15,7 @@ import HomePage from "./pages/Main/HomePage";
 import LoadingSpinner from "./components/LoadingSpinner";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import VisualizationPage from "./pages/Visualization/VisualizationPage";
+import DocumentationPage from "./pages/Documentation/DocumentationPage";
 import { useAuthStore } from "./store/authStore";
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -55,12 +56,13 @@ const App: React.FC = () => {
     { path: "/verify-email", element: <VerifyEmail />, wrapper: AuthRedirect },
     { path: "/forgot", element: <ForgotPassword />, wrapper: AuthRedirect },
     { path: "/reset-password/:token", element: <ChangePassword />, wrapper: AuthRedirect },
+    { path: "/documentation", element: <DocumentationPage />},
   ];
 
   const protectedRoutes = [
     { path: "/upload", element: <UploadDataPage /> },
     { path: "/dashboard", element: <DashboardPage /> },
-    { path: "/visualization", element:<QueryClientProvider client={queryClient}> <VisualizationPage /> </QueryClientProvider>  },
+    { path: "/visualization", element: <VisualizationPage />  },
   ];
 
   return (
