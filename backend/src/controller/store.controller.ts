@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
 import { Store } from '../models/store.model';
+import { isValid, parse } from 'date-fns'
 
 interface CustomRequest extends Request {
     userId?: string;
@@ -15,7 +16,7 @@ const inferDataType = (value: any): string => {
     if (type === 'boolean') return 'boolean';
     if (type === 'string') {
         const lowerCaseValue = value.trim().toLowerCase();
-        if (lowerCaseValue === 'true' || lowerCaseValue === 'false') {
+        if (['true', 'false', 'yes', 'no', 'y', 'n', '1', '0'].includes(lowerCaseValue)) {
             return 'boolean';
         }
     }
@@ -23,31 +24,65 @@ const inferDataType = (value: any): string => {
     // 2. Check Numbers (including string representations)
     if (type === 'number' && Number.isFinite(value)) return 'number';
     if (type === 'string' && value.trim() !== '') {
-        // Use Number() for broader parsing (handles decimals, etc.) but check for NaN and finite result
-        const num = Number(value);
-        if (!isNaN(num) && Number.isFinite(num)) {
-            // Avoid classifying potential date-like strings as numbers if they aren't purely numeric
-            // E.g., "2023-01-01" is NaN when Number() is used directly on the string.
-            // Check if the original string *only* contains numeric characters (and potentially decimal point/sign)
-             if (/^-?\d+(\.\d+)?$/.test(value.trim())) {
-                 return 'number';
-             }
+        // Check for currency symbols
+        const strValue = value.trim();
+        const currencySymbols = ['$', '€', '£', '¥', '₹'];
+        
+        if (currencySymbols.some(symbol => strValue.startsWith(symbol))) {
+            const numericValue = strValue.substring(1).replace(/,/g, '').trim();
+            if (!isNaN(Number(numericValue))) {
+                return 'number';
+            }
+        }
+        
+        // Check for percentage values
+        if (strValue.endsWith('%')) {
+            const numericValue = strValue.slice(0, -1).trim();
+            if (!isNaN(Number(numericValue))) {
+                return 'number';
+            }
+        }
+        
+        // Check for plain numbers
+        if (/^-?\d+(\.\d+)?$/.test(strValue.replace(/,/g, ''))) {
+            return 'number';
         }
     }
 
-    // 3. Check Dates (string representations) - More robust check
+    // 3. Check Dates with date-fns - Much more robust
     if (type === 'string' && value.trim() !== '') {
-        // Attempt to parse with Date.parse - this is quite lenient
-        // Add specific format checks if needed (e.g., ISO 8601)
-        const potentialDate = new Date(value);
-        // Check if the parsed date is valid AND the original string looks like a date
-        // (This helps avoid classifying simple numbers like "2023" as dates)
-        if (!isNaN(potentialDate.getTime())) {
-             // Basic check for common date separators or ISO format parts
-             if (value.includes('-') || value.includes('/') || value.includes('T') || value.includes(':')) {
-                 // More specific regex can be added here if needed, e.g., /\d{4}-\d{2}-\d{2}/
-                 return 'date';
-             }
+        const strValue = value.trim();
+        
+        // Define common date formats to test
+        const DATE_FORMATS = [
+            'yyyy-MM-dd', // ISO format
+            'MM/dd/yyyy', // US format
+            'dd/MM/yyyy', // European format
+            'yyyy/MM/dd', // Another common format
+            'yyyy-MM-dd\'T\'HH:mm:ss', // ISO datetime format
+            'yyyy-MM-dd\'T\'HH:mm:ss.SSS', // ISO datetime with milliseconds
+            'd-MMM-yy',
+            'dd-MMM-yy',
+            'd-MMM-yyyy',
+            'dd-MMM-yyyy',
+        ];
+        
+        // Try parsing with each format
+        for (const format of DATE_FORMATS) {
+            const parsedDate = parse(strValue, format, new Date());
+            if (isValid(parsedDate)) {
+                return 'date';
+            }
+        }
+        
+        // Fallback to standard Date parsing with validation
+        // But only if string contains typical date separators
+        if (strValue.includes('-') || strValue.includes('/') || 
+            strValue.includes('T') || strValue.includes(':')) {
+            const potentialDate = new Date(strValue);
+            if (!isNaN(potentialDate.getTime())) {
+                return 'date';
+            }
         }
     }
 

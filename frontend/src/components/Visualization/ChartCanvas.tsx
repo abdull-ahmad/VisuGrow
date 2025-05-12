@@ -59,76 +59,33 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = () => {
   };
 
   const handleDownloadCanvas = async (canvasId: string) => {
-  const element = document.getElementById(`canvas-${canvasId}`);
-  if (element) {
-    try {
-      // Show loading indicator
-      const loadingEl = document.createElement('div');
-      loadingEl.className = 'fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50';
-      loadingEl.innerHTML = '<div class="bg-white p-4 rounded-lg shadow-lg">Generating image...</div>';
-      document.body.appendChild(loadingEl);
+    const element = document.getElementById(`canvas-${canvasId}`);
+    if (element) {
+      try {
+        const options = {
+          useCORS: true,
+          scale: 2,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight,
+          width: element.scrollWidth,
+          height: element.scrollHeight,
+        };
 
-      // Get the original scroll positions
-      const containerEl = element.parentElement;
-      const originalScrollTop = containerEl?.scrollTop || 0;
-      const originalScrollLeft = containerEl?.scrollLeft || 0;
+        const canvas = await html2canvas(element, options);
 
-      // Set options to capture full content
-      const options = {
-        useCORS: true,
-        scale: 2,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        onclone: (clonedDoc: Document) => {
-          // Find the cloned element
-          const clonedElement = clonedDoc.getElementById(`canvas-${canvasId}`);
-          if (clonedElement) {
-            // Ensure cloned element and its containers have full dimensions visible
-            clonedElement.style.overflow = 'visible';
-            if (clonedElement.parentElement) {
-              clonedElement.parentElement.style.overflow = 'visible';
-              clonedElement.parentElement.style.height = 'auto';
-            }
-
-            // Ensure all text boxes are visible
-            const textBoxes = clonedElement.querySelectorAll('.textbox'); // Use a consistent class name
-            textBoxes.forEach((textBox) => {
-              const textBoxElement = textBox as HTMLElement;
-              textBoxElement.style.overflow = 'visible';
-              textBoxElement.style.position = 'absolute';
-              textBoxElement.style.zIndex = '10'; // Ensure text boxes are above other elements
-            });
-          }
-        },
-      };
-
-      const canvas = await html2canvas(element, options);
-
-      // Create and trigger download
-      const link = document.createElement('a');
-      link.download = `canvas-${canvasId}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-
-      // Restore scroll positions
-      if (containerEl) {
-        containerEl.scrollTop = originalScrollTop;
-        containerEl.scrollLeft = originalScrollLeft;
+        const link = document.createElement('a');
+        link.download = `canvas-${canvasId}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (error) {
+        console.error('Error generating canvas image:', error);
       }
-
-      // Remove loading indicator
-      document.body.removeChild(loadingEl);
-    } catch (error) {
-      console.error('Error generating canvas image:', error);
+    } else {
+      console.error('Canvas element not found:', canvasId);
     }
-  } else {
-    console.error('Canvas element not found:', canvasId);
-  }
-};
+  };
 
 
   const selectedCanvas = canvases.find(canvas => canvas.id === selectedCanvasId);
@@ -243,7 +200,7 @@ export const ChartCanvas: React.FC<ChartCanvasProps> = () => {
               isDraggable={true}
               margin={[15, 15]}
               containerPadding={[0, 0]}
-              useCSSTransforms={true}
+              useCSSTransforms={false}
               compactType="vertical"
             >
               {/* Render charts */}

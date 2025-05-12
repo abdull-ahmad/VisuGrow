@@ -18,12 +18,9 @@ export const getLLMAnalysis: RequestHandler = async (req, res) => {
         }
         let dataStringForPrompt: string;
         if (typeof data === 'string') {
-            // This case might occur if the frontend accidentally sends a stringified JSON already.
-            // Or if the data is genuinely just a string.
+            
             dataStringForPrompt = data;
         } else if (data && (Array.isArray(data) || typeof data === 'object')) {
-            // Convert the entire data object/array to a JSON string.
-            // Using null, 2 for pretty printing, which can help LLM readability.
             const jsonData = JSON.stringify(data, null, 2);
             dataStringForPrompt = `Data:\n${jsonData}`;
         } else {
@@ -169,7 +166,7 @@ export const queryData: RequestHandler = async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields: usermessage and conversationId' });
         }
 
-        // Check if conversation exists
+        
         if (!fileDataStore[conversationId]) {
             return res.status(404).json({ error: 'Conversation not found. Please initialize data analysis first.' });
         }

@@ -2,13 +2,19 @@ import { Cell, Legend, RadialBar, RadialBarChart, ResponsiveContainer, Tooltip }
 import { PieChartDataItem } from "../../types/visualization";
 import { COLORS, TOOLTIP_STYLE } from "../../constants/ChartConstants";
 
-// Radial Bar Chart Component
 interface RadialBarChartComponentProps {
-    data: PieChartDataItem[];
+    data: any[];
+    xParameter: string;
     yParameter: string;
+    color?: string;
 }
 
-export const RadialBarChartComponent: React.FC<RadialBarChartComponentProps> = ({ data, yParameter }) => {
+export const RadialBarChartComponent: React.FC<RadialBarChartComponentProps> = ({ 
+    data, 
+    yParameter,
+    xParameter,
+    color 
+}) => {
     return (
         <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
@@ -30,15 +36,15 @@ export const RadialBarChartComponent: React.FC<RadialBarChartComponentProps> = (
                     }}
                     cornerRadius={8}
                 >
-                    {data.map((_: PieChartDataItem, index: number) => (
+                    {data.map((entry: PieChartDataItem, index: number) => (
                         <Cell
                             key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
+                            
                         />
                     ))}
                 </RadialBar>
                 <Tooltip
-                    formatter={(value) => [`${value}`, yParameter]}
+                    formatter={(value, name, props) => [`${value}`, `${yParameter} for ${props.payload.name || xParameter}`]}
                     contentStyle={TOOLTIP_STYLE}
                 />
                 <Legend

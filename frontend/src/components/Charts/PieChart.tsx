@@ -3,11 +3,18 @@ import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recha
 import { COLORS, TOOLTIP_STYLE } from "../../constants/ChartConstants";
 
 interface PieChartComponentProps {
-    data: PieChartDataItem[];
+    data: any[];
+    xParameter: string;
     yParameter: string;
+    color?: string;
 }
 
-export const PieChartComponent: React.FC<PieChartComponentProps> = ({ data, yParameter }) => {
+export const PieChartComponent: React.FC<PieChartComponentProps> = ({ 
+    data, 
+    yParameter, 
+    xParameter,
+    color 
+}) => {
     return (
         <ResponsiveContainer width="100%" height="100%">
             <PieChart margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
@@ -18,19 +25,19 @@ export const PieChartComponent: React.FC<PieChartComponentProps> = ({ data, yPar
                     innerRadius="45%"
                     outerRadius="65%"
                     dataKey="value"
+                    nameKey="name"
                     paddingAngle={3}
                 >
-                    {data.map((_: PieChartDataItem, index: number) => (
+                    {data.map((entry: PieChartDataItem, index: number) => (
                         <Cell
                             key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
                             stroke="white"
                             strokeWidth={2}
                         />
                     ))}
                 </Pie>
                 <Tooltip
-                    formatter={(value) => [`${value}`, yParameter]}
+                    formatter={(value) => [`${value}`, `${yParameter} for ${xParameter}`]}
                     contentStyle={TOOLTIP_STYLE}
                 />
                 <Legend

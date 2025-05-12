@@ -118,6 +118,7 @@ const StoreModal = ({ isOpen, onClose, onStoreConnected }: StoreModalProps) => {
                                     <input
                                         type="text"
                                         value={storeName}
+                                        pattern= '^[a-zA-Z0-9]{25}+$'
                                         onChange={(e) => setStoreName(e.target.value)}
                                         className="w-full pl-10 px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                                         placeholder="My E-commerce Store"
