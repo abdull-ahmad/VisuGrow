@@ -53,7 +53,7 @@ export const AreaChartComponent: React.FC<{
                 type="monotone"
                 dataKey="secondary"
                 name={`${yParameter} vs ${xParameter}`}
-                fill="url(#colorGradient)"
+                fill={"url(#colorGradient)"}
                 stroke={color || "#3b82f6"}
                 strokeWidth={2}
                 activeDot={{ r: 6, fill: color || "#3b82f6", stroke: "white", strokeWidth: 2 }}

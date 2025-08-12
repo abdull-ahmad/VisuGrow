@@ -39,7 +39,9 @@ const FileDataChatBox: React.FC<FileDataChatBoxProps> = ({ rowData, colDefs, fil
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = async () => {
+  // Update the handleSendMessage function
+
+const handleSendMessage = async () => {
   if (!inputMessage.trim()) return;
 
   // Add user message to chat
@@ -67,25 +69,14 @@ const FileDataChatBox: React.FC<FileDataChatBoxProps> = ({ rowData, colDefs, fil
       });
       
       // Save conversation ID
-      setConversationId(initResponse.data.conversationId);
+      const newConversationId = initResponse.data.conversationId;
+      setConversationId(newConversationId);
       
-      // Now send the actual query
-      const queryResponse = await axios.post('http://localhost:5000/api/ai/query-data', {
-        usermessage: userMessage.content,
-        conversationId: initResponse.data.conversationId
-      });
-      
-      // Process the response
-      handleQueryResponse(queryResponse);
+      // Now handle the streaming query
+      handleStreamingQuery(userMessage.content, newConversationId);
     } else {
-      // Subsequent message - just query
-      const queryResponse = await axios.post('http://localhost:5000/api/ai/query-data', {
-        usermessage: userMessage.content,
-        conversationId
-      });
-      
-      // Process the response
-      handleQueryResponse(queryResponse);
+      // Subsequent message - just query with streaming
+      handleStreamingQuery(userMessage.content, conversationId);
     }
   } catch (error) {
     console.error('Error sending message to AI:', error);
@@ -101,8 +92,150 @@ const FileDataChatBox: React.FC<FileDataChatBoxProps> = ({ rowData, colDefs, fil
         content: 'Sorry, I encountered an error while processing your request.'
       }
     ]);
-  } finally {
+    
     setIsLoading(false);
+  }
+};
+
+// Update the handleStreamingQuery function
+
+// Helper function to handle streaming responses
+const handleStreamingQuery = async (userMessage: string, convId: string) => {
+  try {
+    // Configure request for EventSource
+    const params = new URLSearchParams({
+      conversationId: convId,
+      usermessage: userMessage
+    });
+    
+    const eventSource = new EventSource(
+      `http://localhost:5000/api/ai/query-data?${params}`
+    );
+    
+    let assistantMessage = '';
+    let updatedResponseData: any = null;
+    
+    // Remove pending message and create streaming message
+    setMessages(prev => {
+      const filtered = prev.filter(msg => !msg.pending);
+      return [...filtered, { role: 'assistant' as const, content: '', pending: true }];
+    });
+    
+    // Handle different event types
+    eventSource.addEventListener('status', (event) => {
+      const data = JSON.parse(event.data);
+      console.log('Status update:', data.message);
+    });
+    
+    eventSource.addEventListener('chunk', (event) => {
+      const data = JSON.parse(event.data);
+      assistantMessage += data.content;
+      
+      // Update the streaming message
+      setMessages(prev => {
+        const lastIndex = prev.length - 1;
+        const updatedMessages = [...prev];
+        updatedMessages[lastIndex] = { 
+          ...updatedMessages[lastIndex], 
+          content: assistantMessage,
+          pending: true 
+        };
+        return updatedMessages;
+      });
+    });
+    
+    eventSource.addEventListener('complete', (event) => {
+      const data = JSON.parse(event.data);
+      assistantMessage = data.message;
+      updatedResponseData = data.updatedData;
+      
+      // Finalize the message
+      setMessages(prev => {
+        const lastIndex = prev.length - 1;
+        const updatedMessages = [...prev];
+        updatedMessages[lastIndex] = { 
+          role: 'assistant',
+          content: assistantMessage,
+          pending: false
+        };
+        return updatedMessages;
+      });
+      
+      // Update grid data if there are changes
+      if (updatedResponseData) {
+        // Convert any date strings back to Date objects before updating the grid
+        const convertedData = updatedResponseData.map((row: any) => {
+          const newRow = { ...row };
+
+          // Get column definitions to identify date columns
+          colDefs.forEach(col => {
+            // Check if this is a date column
+            const isDateColumn = JSON.stringify(col).includes(JSON.stringify(dateColumn));
+
+            if (isDateColumn) {
+              const fieldName = col.title || '';
+
+              // Check if field exists and needs conversion
+              if (newRow[fieldName] && typeof newRow[fieldName] === 'string') {
+                try {
+                  // Convert string to Date object
+                  newRow[fieldName] = new Date(newRow[fieldName]);
+                } catch (e) {
+                  console.error(`Failed to convert date field ${fieldName}:`, e);
+                }
+              }
+            }
+          });
+
+          return newRow;
+        });
+
+        // Now update with properly typed data
+        onDataUpdate(convertedData);
+      }
+      
+      setIsLoading(false);
+      eventSource.close();
+    });
+    
+    eventSource.addEventListener('error', (event) => {
+      console.error('SSE Error:', event);
+      
+      // Finalize the message with error
+      setMessages(prev => {
+        const filtered = prev.filter(msg => !msg.pending);
+        return [...filtered, { 
+          role: 'assistant',
+          content: 'Sorry, I encountered an error while processing your request.',
+          pending: false
+        }];
+      });
+      
+      setIsLoading(false);
+      eventSource.close();
+    });
+    
+    // Handle connection closure
+    eventSource.onerror = () => {
+      console.error('EventSource connection error');
+      
+      if (eventSource.readyState === EventSource.CLOSED) {
+        setIsLoading(false);
+      }
+    };
+  } catch (error) {
+    console.error('Error setting up streaming:', error);
+    setIsLoading(false);
+    
+    // Add error message
+    setMessages(prev => {
+      const filtered = prev.filter(msg => !msg.pending);
+      return [...filtered, { 
+        role: 'assistant',
+        content: 'Error connecting to the analysis service.',
+        pending: false
+      }];
+    });
   }
 };
 

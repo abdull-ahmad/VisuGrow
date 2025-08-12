@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import OpenAI from "openai";
-import { cleanupOldConversations, findRowsWithNulls, generateConversationId, getContextRows, isDataCleaningRequest } from "../utils/aiHelpers";
+import { cleanupOldConversations, findRowsWithNulls, generateConversationId, getContextRows, getDataAnalysisSystemPrompt, getDataCleaningSystemPrompt, getOptimizedUserPrompt, isDataCleaningRequest, smartSampleData } from "../utils/aiHelpers";
 import { fileDataStore } from "../Types/types";
 
 
@@ -50,7 +50,7 @@ export const getLLMAnalysis: RequestHandler = async (req, res) => {
             messages: [
                 {
                     role: "system",
-                    content: `You are an expert-level Pakistani data analyst. Your primary goal is to provide insightful, objective, and actionable analysis based *solely* on the data provided. 
+                    content: `You are an expert-level Pakistani data analyst. Your primary goal is to provide insightful, objective, and actionable analysis and provide future forecast based *solely* on the data provided. 
         
         Key characteristics of your analysis should include:
         1.  **Precision and Objectivity**: Base all observations directly on the data. Avoid speculation. If data is insufficient for a conclusion, state it.
@@ -61,7 +61,6 @@ export const getLLMAnalysis: RequestHandler = async (req, res) => {
             - Islamic events: Ramadan, Eid ul-Fitr, Eid ul-Adha, Muharram, Milad un Nabi
             - Christian celebrations: Christmas, Easter
             - Hindu festivals: Diwali, Holi
-            - Sikh celebrations: Baisakhi, Guru Nanak Jayanti
             - National holidays: Independence Day (14 August), Pakistan Day (23 March)
             - Seasonal factors: Monsoon season (July-September), winter shopping season (December)
             - Wedding seasons: typically post-Eid periods and winter months
@@ -157,153 +156,158 @@ export const initializeDataAnalysis: RequestHandler = async (req, res) => {
     }
 };
 
-// Query data without resending the whole dataset
 export const queryData: RequestHandler = async (req, res) => {
     try {
-        const { usermessage, conversationId } = req.body;
+        
+        const usermessage = req.body.usermessage || req.query.usermessage as string;
+        const conversationId = req.body.conversationId || req.query.conversationId as string;
 
         if (!usermessage || !conversationId) {
             return res.status(400).json({ error: 'Missing required fields: usermessage and conversationId' });
         }
-
         
         if (!fileDataStore[conversationId]) {
             return res.status(404).json({ error: 'Conversation not found. Please initialize data analysis first.' });
         }
 
+        // Setup streaming response
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        // Helper function to send stream updates
+        const sendStreamUpdate = (event: string, data: any) => {
+            res.write(`event: ${event}\n`);
+            res.write(`data: ${JSON.stringify(data)}\n\n`);
+        };
+
+        // Send initial message to client
+        sendStreamUpdate('status', { message: 'Processing request...' });
+
         // Update last accessed time
         fileDataStore[conversationId].lastAccessed = new Date();
 
         // Get stored data
-        const { data: actualData, fileName: actualFileName, columns: actualColumns } = fileDataStore[conversationId];
+        const { data: actualData, fileName: actualFileName, columns: actualColumns, dataStats } = fileDataStore[conversationId];
 
         // Determine if this is a cleaning or analysis request
         const isCleaningRequest = isDataCleaningRequest(usermessage);
+        
+        // Send analysis type to client
+        sendStreamUpdate('status', { 
+            message: `Starting ${isCleaningRequest ? 'data cleaning' : 'data analysis'}...`,
+            analysisType: isCleaningRequest ? 'cleaning' : 'analysis'
+        });
 
-        // Prepare data based on request type
+        // Prepare data efficiently based on request type
         let dataForLLM: any[];
         let additionalContext = '';
 
         if (isCleaningRequest) {
-            // For cleaning requests, find rows with nulls and add context
-            const { nullRows, nullIndices, columnsWithNulls } = findRowsWithNulls(actualData);
-
-            if (nullRows.length === 0) {
-                // No null values found - send sample rows
-                dataForLLM = actualData;
+            // For cleaning requests, we already have nullInfo in dataStats
+            if (!dataStats?.nullCounts||Object.keys(dataStats.nullCounts).length === 0) {
+                // No null values found - send a smaller sample
+                dataForLLM = actualData.slice(0, Math.min(50, actualData.length));
                 additionalContext = "Note: I checked the data and didn't find any null or empty values.";
             } else {
-                // Get null rows plus context rows
-                dataForLLM = getContextRows(actualData, nullIndices);
+                // Get only rows with nulls plus minimal context (more efficient)
+                const nullColumns = !dataStats?.nullCounts ||Object.keys(dataStats.nullCounts);
+                const nullIndices = actualData.reduce((indices, row, idx) => {
+                    if (nullColumns.some(col => row[col] === null || row[col] === undefined || row[col] === ''))
+                        indices.push(idx);
+                    return indices;
+                }, [] as number[]);
+                
+                dataForLLM = getContextRows(actualData, nullIndices, 2); // Reduced context rows
                 additionalContext = `
-I've identified ${nullRows.length} rows with missing values out of ${actualData.length} total rows.
-The following columns have missing values: ${columnsWithNulls.join(', ')}.
-I'm providing you with these rows plus surrounding context (${dataForLLM.length} rows total).
-Each row includes a __rowIndex property showing its original position in the dataset.`;
+I've identified rows with missing values out of ${actualData.length} total rows.
+The following columns have missing values: ${nullColumns.join(', ')} with counts: ${
+                    nullColumns.map(col => `${col}: ${(dataStats.nullCounts ?? {})[col]}`).join(', ')
+                }.
+I'm providing these rows plus minimal surrounding context.`;
             }
         } else {
-            // For analysis requests, use a representative sample
-            if (actualData.length > 1000) {
-                // For very large datasets, send a representative sample
-                const sampleSize = 200;
-                const step = Math.max(1, Math.floor(actualData.length / sampleSize));
-                dataForLLM = [];
-
-                for (let i = 0; i < actualData.length; i += step) {
-                    dataForLLM.push(actualData[i]);
-                    if (dataForLLM.length >= sampleSize) break;
-                }
-
+            // For analysis requests, use a smarter sampling strategy
+            if (actualData.length > 500) {
+                // Sample based on data characteristics
+                dataForLLM = smartSampleData(actualData, 100); // Using a new helper function
                 additionalContext = `
-Note: This is a sample of ${dataForLLM.length} rows from the total ${actualData.length} rows.
-The sample was created by selecting rows at regular intervals across the dataset.`;
+Note: This is an intelligent sample of ${dataForLLM.length} rows from the total ${actualData.length} rows.
+The sample was created to represent the data distribution effectively.`;
             } else {
                 // For smaller datasets, use all data
                 dataForLLM = actualData;
             }
         }
 
-        // Prepare system prompt
-        const systemPrompt = `You are an expert data analyst assistant that helps users understand and clean their data. 
-        
-You have two main functions:
-1. Data Analysis: When users ask for insights or analysis, provide them with a clear, concise analysis.
-2. Data Cleaning: When users ask to fix data issues, you must respond in a special format that allows the application to update the data.
+        sendStreamUpdate('status', { message: 'Data prepared, sending to AI model...' });
 
-${isCleaningRequest ? `
-For data cleaning operations:
-- Your response must include a JSON block wrapped between [DATA_UPDATE] and [/DATA_UPDATE] tags
-- Inside this block, provide a valid JSON array containing the updated rows
-- Each row must include the __rowIndex property to identify its original position
-- Only include modified rows in your update
-- Make sure your JSON is valid and properly formatted
+        // Prepare optimized system prompt - concise and focused
+        const systemPrompt = isCleaningRequest 
+            ? getDataCleaningSystemPrompt(actualFileName)
+            : getDataAnalysisSystemPrompt(actualFileName);
 
-Example of a valid cleaning response:
-"I've filled the missing values in the 'revenue' column by calculating the average.
+        // Construct a more efficient user prompt
+        const userPrompt = getOptimizedUserPrompt(
+            actualFileName, 
+            actualData.length,
+            actualColumns,
+            dataForLLM,
+            additionalContext,
+            usermessage,
+            isCleaningRequest
+        );
 
-[DATA_UPDATE]
-[
-  {"__rowIndex": 5, "name": "Product A", "revenue": 1250, "category": "Electronics"},
-  {"__rowIndex": 12, "name": "Product B", "revenue": 1250, "category": "Home"}
-]
-[/DATA_UPDATE]
-
-The missing values have been filled with the average revenue of 1250."
-` : ''}
-
-The file being analyzed is "${actualFileName}".`;
-
-        // Construct the prompt for the LLM
-        let userPrompt = `I'm analyzing this file: "${actualFileName}" with ${actualData.length} rows and ${actualColumns.length} columns.
-
-Column Names: ${actualColumns.join(', ')}
-
-${additionalContext}
-
-Here's ${isCleaningRequest ? 'the relevant data' : 'a preview of the data'}:
-${JSON.stringify(dataForLLM, null, 2)}
-
-User's request: "${usermessage}"`;
-
-        // Call the LLM API
-        console.log(`Sending ${isCleaningRequest ? 'cleaning' : 'analysis'} request to LLM...`);
-        const completion = await openai.chat.completions.create({
+        // Call OpenAI with streaming
+        const stream = await openai.chat.completions.create({
             model: "deepseek/deepseek-r1:free",
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userPrompt }
             ],
+            stream: true,
         });
 
-        const response = completion.choices[0]?.message?.content?.trim();
-
-        if (!response) {
-            console.error("LLM response was empty or malformed.");
-            return res.status(500).json({ error: 'Failed to get a valid analysis from the AI model.' });
+        let fullResponse = '';
+        let streamingStarted = false;
+        
+        // Process the stream
+        for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+                fullResponse += content;
+                
+                // Send the chunk to the client
+                if (!streamingStarted) {
+                    sendStreamUpdate('start', { message: 'Receiving response from AI...' });
+                    streamingStarted = true;
+                }
+                
+                sendStreamUpdate('chunk', { content });
+            }
         }
 
         // Check if response contains data update instructions
-        let updatedData: any = null;
-        let message = response;
-
         const dataUpdateRegex = /\[DATA_UPDATE\]([\s\S]*?)\[\/DATA_UPDATE\]/;
-        const match = response.match(dataUpdateRegex);
+        const match = fullResponse.match(dataUpdateRegex);
+        let updatedData: any = null;
 
-        if (match && match[1]) {
+        if (match && match[1] && isCleaningRequest) {
             try {
                 // Extract and parse the JSON data
                 const jsonStr = match[1].trim();
                 const updateRows = JSON.parse(jsonStr);
+                
+                // Send status update
+                sendStreamUpdate('status', { message: 'Processing data updates...' });
 
-                // Remove the data update block from the message
-                message = response.replace(dataUpdateRegex, '').trim();
-
-                console.log("Data update instructions received from LLM");
-
+                // Remove the data update block from the message for display
+                const cleanMessage = fullResponse.replace(dataUpdateRegex, '').trim();
+                
                 if (Array.isArray(updateRows) && updateRows.length > 0) {
                     // Create a copy of the full dataset
                     updatedData = [...actualData];
-
+                    
                     // Apply each update to the appropriate row
                     updateRows.forEach(updateRow => {
                         const rowIndex = updateRow.__rowIndex;
@@ -314,21 +318,43 @@ User's request: "${usermessage}"`;
                             updatedData[rowIndex] = { ...updatedData[rowIndex], ...rowWithoutIndex };
                         }
                     });
-
+                    
                     // Update the stored data
                     fileDataStore[conversationId].data = updatedData;
+                    
+                    // Recalculate data statistics
+                    const nullInfo = findRowsWithNulls(updatedData);
+                    fileDataStore[conversationId].dataStats = {
+                        rowCount: updatedData.length,
+                        nullCounts: nullInfo.columnsWithNulls.reduce((acc, col) => {
+                            acc[col] = nullInfo.nullRows.filter(row => 
+                                row[col] === null || row[col] === undefined || row[col] === '').length;
+                            return acc;
+                        }, {} as Record<string, number>)
+                    };
+                    
+                    // Send final update with the cleaned message and updated data
+                    sendStreamUpdate('complete', {
+                        message: cleanMessage,
+                        updatedData: updatedData
+                    });
                 }
             } catch (error) {
                 console.error("Error parsing data update JSON:", error);
-                message = "I found some data issues, but there was an error processing the updates. Please try a more specific request.";
+                sendStreamUpdate('error', { 
+                    message: "I found some data issues, but there was an error processing the updates. Please try a more specific request."
+                });
             }
+        } else {
+            // Send final message without data updates
+            sendStreamUpdate('complete', { 
+                message: fullResponse,
+                updatedData: null
+            });
         }
-
-        res.json({
-            message: message,
-            updatedData: updatedData,
-            conversationId
-        });
+        
+        // End the response
+        res.end();
 
     } catch (error: any) {
         console.error('Error in /api/ai/query-data:', error);
@@ -338,7 +364,15 @@ User's request: "${usermessage}"`;
             errorMessage = error.message;
             console.error("OpenAI API Error:", error.name, error.status, error.headers, error.error);
         }
-
-        res.status(500).json({ error: errorMessage });
+        
+        // Try to send error response, but check if headers have been sent
+        if (!res.headersSent) {
+            res.status(500).json({ error: errorMessage });
+        } else {
+            // If streaming has already started, send error as event
+            res.write(`event: error\n`);
+            res.write(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
+            res.end();
+        }
     }
 };
